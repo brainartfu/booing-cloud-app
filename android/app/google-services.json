@@ -1,0 +1,55 @@
+{
+  "project_info": {
+    "project_number": "1004306547703",
+    "project_id": "booing-app-34f27",
+    "storage_bucket": "booing-app-34f27.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1004306547703:android:e04c7a32b32225624924f2",
+        "android_client_info": {
+          "package_name": "com.rr.booingapp"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "1004306547703-etro5dtqlsldjqpb282s16vrg7lck3ue.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.rr.booingapp",
+            "certificate_hash": "5e7f6a425ff8ab8b75dbc5488c100cfa287304fc"
+          }
+        },
+        {
+          "client_id": "1004306547703-vlbl4m9mhddcpm0fr4rqdnipri4in9i0.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.rr.booingapp",
+            "certificate_hash": "5e8f16062ea3cd2c4a0d547876baa6f38cabf625"
+          }
+        },
+        {
+          "client_id": "1004306547703-4salgg6e7oqrc745madpvr2m9aqf5r5p.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCNp2KClvYznO5Rr9t4u3459jNfqxKgYCc"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "1004306547703-4salgg6e7oqrc745madpvr2m9aqf5r5p.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
