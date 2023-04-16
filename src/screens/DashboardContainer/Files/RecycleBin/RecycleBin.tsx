@@ -306,7 +306,7 @@ const RecycleBin = ({navigation}: any) => {
   }, [user_id, selectedIds]);
 
   return (
-    <LayoutWrapper
+    <LayoutWrapper navigation={navigation} currentStack="RecycleBin"
       onBackPress={() => navigation.navigate('Uploads')}>
         <View style={{paddingLeft: 10, paddingRight: 10, flex: 1}}>
           <View
@@ -402,6 +402,7 @@ const RecycleBin = ({navigation}: any) => {
             )}
           </View>
         </View>
+    }
     </LayoutWrapper>
   );
 };

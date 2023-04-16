@@ -1,20 +1,22 @@
 import React from 'react'
 import { Image, Pressable, StyleSheet, Text, View } from 'react-native'
 import { small_logo } from '../../../../../images/export'
-import Entypo from "react-native-vector-icons/Entypo";
-import Ionicons from "react-native-vector-icons/Ionicons";
-import MaterialCommunityIcons from "react-native-vector-icons/MaterialCommunityIcons";
+import LinearGradient from 'react-native-linear-gradient';
 
 export const BuySpaceheader = () => {
   return (
-    <View style={styles.DashboardHeader}>
+    <LinearGradient
+      start={{x: 0, y: 0}}
+      end={{x: 0, y: 1}}
+      colors={['#55A4F7', '#82BEFA']}
+      style={styles.DashboardHeader}>    
       <View style={styles.topBar}>
         <Image style={styles.image} source={small_logo} />
       </View>
       <View style={styles.bottomBar}>
         <Text style={styles.BooingTitle}>BUY SPACE</Text>
       </View>
-    </View>
+    </LinearGradient>
   )
 }
 const styles = StyleSheet.create({

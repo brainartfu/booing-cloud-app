@@ -157,10 +157,9 @@ export default function useSocket() {
       peer.setRemoteDescription(new RTCSessionDescription(res.offer)).then(function() {
         peer.createAnswer().then(function (answer) { 
           peer.setLocalDescription(answer); 
-          // console.log("answer->send answer")
           socket.emit('answer', {from: user_id, to: res.from, answer: answer})
         }, function (error) { 
-          alert("Error when creating an answer"); 
+          console.log('Error when creating an answer')
         })
       })      
     })

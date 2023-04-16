@@ -23,7 +23,7 @@ const ShowFileWrapper = ({
   uri,
   image
 }: ShowFileWrapperProps) => {
-
+  // console.log(title, displayComponent, setIsShowingFile, uri.length, image)
   const sharing = async () => {
     const shareOptions = {
       message: ' ',

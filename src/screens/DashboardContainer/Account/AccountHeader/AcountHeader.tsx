@@ -72,7 +72,7 @@ const AccountHeader = () => {
           <Image source={{uri:loggedInUser.avatar}} style={styles.avatar} />
           :<FontAwesome name="user-circle-o" size={70} color="white" />
           }
-          <View style={{alignItems: 'flex-start'}}>
+          <View style={{alignItems: 'flex-start', marginLeft: 15}}>
             <Text style={styles.title}>{loggedInUser?.name}</Text>
             <Text style={styles.text}>{loggedInUser?.email}</Text>
           </View>   

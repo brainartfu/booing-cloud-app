@@ -36,7 +36,6 @@ function Register({navigation}: {navigation: any}) {
   const [terms, setTerms] = useState<boolean>(false);
 
   const handlePassword = (val) => {
-    console.log(val)
     const patterndigits = /\d/;
     const patternlower = /[a-z]/;
     const patternupper = /[A-Z]/;
@@ -47,7 +46,6 @@ function Register({navigation}: {navigation: any}) {
     if (patternlower.test(val)) {requireCond.lower = true; requireCond.include += 1};
     if (patternupper.test(val)) {requireCond.upper = true; requireCond.include += 1};
     if (patternnonWords.test(val)) {requireCond.special = true; requireCond.include += 1};
-    console.log(requireCond)
     setFormRegister({...formRegister, password: val});
     setStrongCond(requireCond);
   }
@@ -512,14 +510,12 @@ const styles = StyleSheet.create({
   },
   text: {
     fontFamily: 'Rubik-Regular',
-    fontFamily: 'Rubik-Regular',
     fontSize: 20,
     lineHeight: 21,
     letterSpacing: 0.25,
     color: 'white',
   },
   title: {
-    fontFamily: 'Rubik-Regular',
     fontFamily: 'Rubik-Regular',
     fontSize: 17,
     lineHeight: 21,
@@ -530,7 +526,6 @@ const styles = StyleSheet.create({
     // marginRight: 70,
   },
   normaltext: {
-    fontFamily: 'Rubik-Regular',
     fontFamily: 'Rubik-Regular',
     fontSize: 17,
     lineHeight: 21,

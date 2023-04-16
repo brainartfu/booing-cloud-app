@@ -23,6 +23,14 @@ const Login = ({navigation}: {navigation: any}) => {
     if (email && password)
       await login({email, password}).then(res => {
         if (res.success) navigation.navigate('DashboardContainer');
+      }).catch(err => {
+        console.log(err.response?.data?.user_id)
+        if (err.response?.data?.user_id) {
+          navigation.navigate('Verification', {
+            user_id: err.response?.data?.user_id,
+            isSignup: true,
+          });
+        }
       });
   };
 

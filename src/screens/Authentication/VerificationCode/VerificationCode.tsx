@@ -23,6 +23,7 @@ import {
   forgetPassword,
   mailVerification,
   updatePassword,
+  resendCode
 } from '../../../shared/slices/Auth/AuthService';
 
 interface SegmentedAutoMovingInputProps {
@@ -98,6 +99,7 @@ function VerificationCode({route, navigation}: {route: any; navigation: any}) {
   const [userId, setUserId] = useState<any>(null);
   const [isSignup, setIsSignup] = useState<boolean>(false);
   const [email, setEmail] = useState<string>('');
+  const [redirectPath, setRedirectPath] = useState<string>('');
   const [password, setPassword] = useState<string>('');
   let [step, setStep] = useState<number>(0);
 
@@ -109,7 +111,8 @@ function VerificationCode({route, navigation}: {route: any; navigation: any}) {
         code: code,
         isSignup: isSignup,
       }).then(res => {
-        if (step === 1 && isSignup) navigation.navigate('Login');
+        if (redirect) navigation.navigate(redirect)
+        else if (step === 1 && isSignup) navigation.navigate('Login');
         else if (step === 1 && !isSignup) setStep(++step);
       });
     }
@@ -143,11 +146,17 @@ function VerificationCode({route, navigation}: {route: any; navigation: any}) {
       if (res.success) navigation.navigate('Login');
     });
   };
-
+  const handleResend = async () => {
+    console.log(userId)
+    await resendCode({
+      user_id: userId,
+    })   
+  }
   useEffect(() => {
-    const {user_id, isSignup} = route.params;
+    const {user_id, isSignup, redirect} = route.params;
     console.log(user_id);
     setUserId(user_id);
+    if (redirect) setRedirectPath(redirect);
     setIsSignup(isSignup);
     if (isSignup) setStep(++step);
   }, []);
@@ -299,6 +308,9 @@ function VerificationCode({route, navigation}: {route: any; navigation: any}) {
                 <Text style={{textAlign: 'center'}}>
                   A mail was send to your address
                 </Text>
+                <Text style={{textAlign: 'center'}}>
+                  Enter Verification Code
+                </Text>
                 <SegmentedAutoMovingInput
                   segments={4}
                   containerStyle={{
@@ -320,9 +332,9 @@ function VerificationCode({route, navigation}: {route: any; navigation: any}) {
                   })}
                   onChange={val => setCode(Number(val))}
                 />
-                <Text style={{textAlign: 'center'}}>
-                  Enter Verification Code
-                </Text>
+                <Pressable onPress={handleResend} style={{width: '100%', alignItems: 'flex-end', marginTop: 10, marginBottom: 30}}>
+                  <Text style={{ color: "#33a1f9"}}>Resend verification code.</Text>
+                </Pressable>
               </View>
               <LinearGradient
                 colors={['#33A1F9', '#6DBDFE']}

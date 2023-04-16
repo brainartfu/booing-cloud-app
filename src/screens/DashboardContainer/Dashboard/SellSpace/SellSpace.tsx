@@ -25,9 +25,11 @@ const SellSpace = () => {
       console.log(quantity)
   }
   const handleQuantityInput = (val) => {
-    let cval = val.replace(/[^0-9]/g, '')*1;
-    if (cval > 1) setQuantity(cval)
-    else setQuantity(1);
+    const valid = !isNaN(val) && !isNaN(parseFloat(val));
+    if (valid) {
+      if (val > 1) setQuantity(val)
+      else setQuantity(1);
+    }
   }
   const getTrafficData = async () => {
     await getTraffic({user_id}).then(res => {

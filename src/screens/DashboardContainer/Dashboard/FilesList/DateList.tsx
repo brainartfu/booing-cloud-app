@@ -37,19 +37,6 @@ const icons = {
     />
     // <Image source={musicIcon} style={{width: size, height: size}}/>
   ),
-  Manually: (size: number, color = '#8F8F8F') => (
-    <AntDesign name="picture" size={size} color={color} />
-  ),
-  'Duplicated Files': (size: number, color = '#8F8F8F') => (
-    <AntDesign name="picture" size={size} color={color} />
-  ),
-  Downloads: (size: number, color = '#8F8F8F') => (
-    <MaterialCommunityIcons
-      name="file-download-outline"
-      size={size}
-      color={color}
-    />
-  ),
   Videos: (size: number, color = '#8F8F8F') => (
     <Feather
       name="video"
@@ -57,19 +44,66 @@ const icons = {
       color={color}
     />
   ),
-  Cache: (size: number, color = '#8F8F8F') => (
-    <MaterialCommunityIcons name="cached" size={size} color={color} />
-  ),
-  Thumbnails: (size: number, color = '#8F8F8F') => (
-    <Foundation name="thumbnails" size={size} color={color} />
-  ),
-  'Empty folders': (size: number, color = '#8F8F8F') => (
-    <MaterialCommunityIcons name="folder-outline" size={size} color={color} />
-  ),
-  'Not installed apks': (size: number, color = '#8F8F8F') => (
+  APK: (size: number, color = '#8F8F8F') => (
     <AntDesign name="android1" size={size} color={color} />
   ),
 };
+
+const getCategoryTime = () => {
+  // Start time of today
+  const todayStartTime = new Date();
+  todayStartTime.setHours(0, 0, 0, 0);
+
+  // Start time of yesterday
+  const yesterdayStartTime = new Date();
+  yesterdayStartTime.setDate(yesterdayStartTime.getDate() - 1);
+  yesterdayStartTime.setHours(0, 0, 0, 0);
+
+  // Start time of this week (starting from Sunday)
+  const thisWeekStartTime = new Date();
+  thisWeekStartTime.setDate(thisWeekStartTime.getDate() - thisWeekStartTime.getDay());
+  thisWeekStartTime.setHours(0, 0, 0, 0);
+
+  // Start time of last week (starting from Sunday)
+  const lastWeekStartTime = new Date();
+  lastWeekStartTime.setDate(lastWeekStartTime.getDate() - lastWeekStartTime.getDay() - 7);
+  lastWeekStartTime.setHours(0, 0, 0, 0);
+
+  // Start time of this month
+  const thisMonthStartTime = new Date();
+  thisMonthStartTime.setDate(1);
+  thisMonthStartTime.setHours(0, 0, 0, 0);
+
+  // Start time of last month
+  const lastMonthStartTime = new Date();
+  lastMonthStartTime.setMonth(lastMonthStartTime.getMonth() - 1);
+  lastMonthStartTime.setDate(1);
+  lastMonthStartTime.setHours(0, 0, 0, 0);
+
+  // Start time of this year
+  const thisYearStartTime = new Date();
+  thisYearStartTime.setMonth(0);
+  thisYearStartTime.setDate(1);
+  thisYearStartTime.setHours(0, 0, 0, 0);
+
+  // Start time of last year
+  const lastYearStartTime = new Date();
+  lastYearStartTime.setFullYear(lastYearStartTime.getFullYear() - 1);
+  lastYearStartTime.setMonth(0);
+  lastYearStartTime.setDate(1);
+  lastYearStartTime.setHours(0, 0, 0, 0);  
+  return {
+    'today': todayStartTime.getTime()/1000,
+    'yesterday': yesterdayStartTime.getTime()/1000,
+    'thisWeek': thisWeekStartTime.getTime()/1000,
+    'lastWeek': lastWeekStartTime.getTime()/1000,
+    'thisMonth': thisMonthStartTime.getTime()/1000,
+    'lastMonth': lastMonthStartTime.getTime()/1000,
+    'thisYear': thisYearStartTime.getTime()/1000,
+    'lastYear': lastYearStartTime.getTime()/1000,
+    'longAgo': 0
+  }
+}
 
 interface RenderFileData {
   item: {
@@ -81,7 +115,7 @@ interface RenderFileData {
   };
 }
 
-interface FilesListProps {
+interface DateListProps {
   data: [];
   label: keyof typeof icons;
   removeDeletedItems: Function;
@@ -124,7 +158,7 @@ const DeleteBtn = ({onPress, disabled}: DeleteBtnProps) => {
   );
 };
 
-export function FilesList({
+export function DateList({
   data,
   label,
   type,
@@ -133,8 +167,9 @@ export function FilesList({
   removeDeletedItems,
   setCategoryView,
   categoryView
-}: FilesListProps) {
-  console.log(type)
+}: DateListProps) {
+  console.log(type, categoryView)
+  const [showData, setShowData] = useState(null);
   const [selectedFilesIds, setSelectedFilesIds] = useState<string[]>([]);
   const [deleteBtnProps, setDeleteBtnProps] = useState({
     disabled: false,
@@ -155,29 +190,10 @@ export function FilesList({
   );
 
   const onDeleteFilesPress = useCallback(async () => {
-    if (label === 'Manually') {
-      let pathArr = {};
-      selectedFilesIds.map((id) => {
-        const item = data.find((e: RenderFileData['item']) => e.id === id);
-        if (item) {
-          if (pathArr[item.type]) pathArr[item.type].push((item as any).path);
-          else pathArr[item.type] = [(item as any).path];
-        }
-      })
-      for (let key in pathArr) {
-        if (key === 'Pictures') {
-          isDeleted = await ManageApps.deleteImages(pathArr[key]);
-        }
-        if (key === 'Videos') {
-          isDeleted = await ManageApps.deleteVideos(pathArr[key]);
-        }
-        if (key === 'Music') {
-          isDeleted = await ManageApps.deleteAudios(pathArr[key]);
-        }      
-      }
-    } else {
+    // console.log(selectedFilesIds, data)
 
       const paths = selectedFilesIds.reduce<string[]>((acc, id) => {
+        console.log(acc)
         const item = data.find((e: RenderFileData['item']) => e.id === id);
         if (item) {
           acc.push((item as any).path);
@@ -187,7 +203,7 @@ export function FilesList({
       }, []);
 
       let isDeleted;
-
+      console.log(paths)
       if (type === 'images') {
         isDeleted = await ManageApps.deleteImages(paths);
       }
@@ -197,29 +213,11 @@ export function FilesList({
       if (type === 'audios') {
         isDeleted = await ManageApps.deleteAudios(paths);
       }
-      if (label === 'Empty folders' || label === 'Thumbnails') {
-        isDeleted = await ManageApps.deleteDirs(paths);
-        if (isDeleted) {
-          removeDeletedItems(selectedFilesIds, label);
-        }
-      }
-      if (label === 'Not installed apks') {
+      if (type === 'apks') {
         isDeleted = await ManageApps.deleteApks(paths);
-        if (isDeleted) {
-          removeDeletedItems(selectedFilesIds, label);
-        }
       }
-
       setDeleteBtnProps({disabled: true, show: true});
-
-      if (
-        label !== 'Empty folders' &&
-        label !== 'Thumbnails' &&
-        label !== 'Not installed apks'
-      ) {
-        await refetchByLabel(selectedFilesIds, type);
-      }
-
+      await refetchByLabel(selectedFilesIds, type);
       setSelectedFilesIds([]);
       setDeleteBtnProps({disabled: false, show: false});
       if (isDeleted) {
@@ -228,33 +226,10 @@ export function FilesList({
           text1: 'items deleted successfully',
         });
       }
-    }
+
   }, [selectedFilesIds, refetchByLabel]);
 
-  const onDeleteAppsPress = async () => {
-    const apps = selectedFilesIds.reduce<any[]>((acc, id) => {
-      const item = data.find((e: RenderFileData['item']) => e.id === id);
-      if (item) {
-        acc.push(item);
-        return acc;
-      }
-      return acc;
-    }, []);
 
-    for (const app of apps) {
-      const arr = await ManageApps.clearAppVisibleCache(
-        (app as any).packageName,
-      );
-    }
-
-    setDeleteBtnProps({disabled: true, show: true});
-    await refetchByLabel(label);
-
-    setDeleteBtnProps({disabled: false, show: false});
-    Toast.show({
-      text1: `cache cleared for apps ${apps.map(e => e.name).join(',')}`,
-    });
-  };
   const otherPress = (id) => {
     ShowCategory();
   }
@@ -298,6 +273,38 @@ export function FilesList({
       }
     };
   }, [selectedFilesIds]);
+
+  useEffect(() => {
+    console.log('data')
+    if (data.length > 0) {
+      const times = getCategoryTime();
+      console.log(times)
+      const newData = {today: [], yesterday: [], thisWeek: [], lastWeek: [], thisMonth: [], lastMonth: [], thisYear: [], lastYear: [], longAgo: []};
+      for (let i = 0; i < data.length; i++) {
+        console.log(data[i]['created'])
+        if (data[i]['created'] > times['today']) {
+          newData['today'].push(data[i]);
+        } else if (data[i]['created'] > times['yesterday']) {
+          newData['yesterday'].push(data[i]);
+        } else if (data[i]['created'] > times['thisWeek']) {
+          newData['thisWeek'].push(data[i]);
+        } else if (data[i]['created'] > times['lastWeek']) {
+          newData['lastWeek'].push(data[i]);
+        } else if (data[i]['created'] > times['thisMonth']) {
+          newData['thisMonth'].push(data[i]);
+        } else if (data[i]['created'] > times['lastMonth']) {
+          newData['lastMonth'].push(data[i]);
+        } else if (data[i]['created'] > times['thisYear']) {
+          newData['thisYear'].push(data[i]);
+        } else if (data[i]['created'] > times['lastYear']) {
+          newData['lastYear'].push(data[i]);
+        } else {
+          newData['longAgo'].push(data[i]);
+        }
+      }
+      setShowData(newData);
+    }
+  }, [data])
 
   const ShowCategory = () => {
     if (data.length > 0)
@@ -343,9 +350,7 @@ export function FilesList({
                 )}
                 {deleteBtnProps.show && (
                   <DeleteBtn
-                    onPress={
-                      label !== 'Cache' ? onDeleteFilesPress : onDeleteAppsPress
-                    }
+                    onPress={onDeleteFilesPress}
                     disabled={deleteBtnProps.disabled}
                   />
                 )}
@@ -354,16 +359,37 @@ export function FilesList({
             <SafeAreaView style={{paddingTop: 10, paddingBottom: 10}}>
 
                { categoryView===type?(
-                 <FlatList
-                   key={"duple"}
-                   data={data}
-                   scrollEnabled={false}
-                   columnWrapperStyle={{justifyContent: data.length>3?'space-between':'flex-start', marginTop: 5 }}
-                   renderItem={renderFile}
-                   keyExtractor={item => item.id}
-                   horizontal={false}
-                   numColumns={4}
-                 />
+                <>
+                  { showData && Object.keys(showData).map(key => (
+                    <View key={key}>
+                      {showData[key].length > 0 && (
+                        <View>
+                          <Text style={{
+                            marginLeft: 10,
+                            color: '#A0A0A0',
+                            fontFamily: 'Rubik-Bold', 
+                            fontSize: 16,
+                            marginRight: 10,
+                            borderBottomWidth: 1,
+                            borderBottomColor: '#A0A0A0',
+                            borderBottomStyle: 'dotted',
+                            padding: 5
+                          }}>{key}</Text>
+                          <FlatList
+                            key={key}
+                            data={showData[key]}
+                            scrollEnabled={false}
+                            columnWrapperStyle={{justifyContent: showData[key].length>3?'space-between':'flex-start', marginTop: 5 }}
+                            renderItem={renderFile}
+                            keyExtractor={item => item.id}
+                            horizontal={false}
+                            numColumns={4}
+                          />
+                        </View>
+                      )}
+                    </View>
+                  ))}
+                </>
                ):(
                  <FlatList
                    data={data}

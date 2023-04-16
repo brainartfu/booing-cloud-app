@@ -35,6 +35,7 @@ import {
   checkForUploads,
 } from '../../shared/slices/Fragmentation/FragmentationService';
 import FolderPage from './Files/FolderPage/FolderPage';
+import SearchPage from './Files/SearchPage/SearchPage';
 import useSocket from '../../shared/socket';
 import {HomeIcon, FilesIcon, AccountIcon} from '../../Components/TabbarIcon';
 const Stack = createBottomTabNavigator();
@@ -43,7 +44,6 @@ const DashboardContainer =  () => {
   const device = store.getState().devices;
   const user_id = store.getState().authentication.userId;
   useEffect(() => {
-    console.log("_!______________!______________!_!______________!______________!_")
     initSocket();
   }, [])
  
@@ -70,7 +70,7 @@ const DashboardContainer =  () => {
               // You can return any component that you like here!
               if (rn == 'Home') return <HomeIcon active={iconName = focused} />
               if (rn == 'Files') return <FilesIcon active={iconName = focused} />
-              if (rn == 'Booingcoin') return <Image style={{width: 35, height: 26}} source={eyeWhite}/> 
+              if (rn == 'Booingcoin') return <Image style={{width: 26}} source={eyeWhite}/> 
               if (rn == 'Account') return <AccountIcon active={iconName = focused} />
               
               return (
@@ -141,6 +141,14 @@ const DashboardContainer =  () => {
           <Stack.Screen
             name="Uploads"
             component={Uploads}
+            options={{
+              // headerShown: false,
+              tabBarItemStyle: {display: 'none'},
+            }}
+          />
+          <Stack.Screen
+            name="Search"
+            component={SearchPage}
             options={{
               // headerShown: false,
               tabBarItemStyle: {display: 'none'},

@@ -46,7 +46,7 @@ export const authentificationSlice = createSlice({
       action: PayloadAction<any>,
     ) => {
       console.log('storage', action.payload)
-      state.storage = action.payload;
+      state.storage = {...state.storage, ...action.payload};
     },
     saveUserAvatar: (
       state: {

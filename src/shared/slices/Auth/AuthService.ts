@@ -90,6 +90,18 @@ export const updatePassword = (data: {
   });
 };
 
+export const resendCode = (data: {
+  user_id: string;
+}) => {
+  return Executor({
+    method: 'post',
+    url: BaseUrl + '/resendCode',
+    data,
+    isSilent: false,
+    withoutToast: false,
+  });
+};
+
 export const socialMediaSignIn = (data: {
   name: string;
   email: string;

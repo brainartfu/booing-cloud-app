@@ -12,7 +12,7 @@ import FilesHeader from '../FilesHeader/FilesHeader';
 import {AXIOS_ERROR, BaseUrl, MAX_SIZE, store, types} from '../../../../shared';
 import {setRootLoading} from '../../../../shared/slices/rootSlice';
 import {uploadFiles} from '../../../../shared/slices/Fragmentation/FragmentationService';
-
+import {FolderIcon} from '../Files';
 import {useIsFocused} from '@react-navigation/native';
 import axios from 'axios';
 import {Dialog} from 'react-native-elements';
@@ -65,6 +65,7 @@ const CreateFolder = ({closeModel}: {closeModel: (bool?: boolean) => void}) => {
         data: {
           user_id,
           name,
+          dir: 'top'
         },
       });
 
@@ -248,6 +249,7 @@ const fileStyles = StyleSheet.create({
   },
 });
 const Uploads = ({navigation}: {navigation: any}) => {
+  const [folders, setFolders] = useState([]);
   const category = store.getState().directories.category;
   const user_id = store.getState().authentication.userId;
   const isFocused = useIsFocused();
@@ -330,9 +332,69 @@ const Uploads = ({navigation}: {navigation: any}) => {
     }
     store.dispatch(setRootLoading(false));
   }
+
+  const fetchFolders = useCallback(async () => {
+    if (!user_id) {
+      return Toast.show({
+        type: 'error',
+        text1: 'cannot get folders, you are not logged in !',
+      });
+    }
+
+    try {
+      // console.log('directories from sotre : ' + JSON.stringify(directoires));
+      // store.dispatch(setRootLoading(true));
+      const response = await axios({
+        method: 'POST',
+        url: `${BaseUrl}/logged-in-user/directories/top`,
+        headers: {
+          Accept: 'application/json',
+          'Content-type': 'application/json',
+        },
+        data: {
+          user_id,
+        },
+      });
+
+      if (response.status === 200) {
+        const data = response.data.data;
+        setFolders(data);
+      }
+      // await getDirectories({user_id}).then(res => {
+      //   // console.log(res);
+      //   if (res.success) {
+      //     setFolders(res.data);
+      //   }
+      // });
+    } catch (e: any) {
+      if (e.name === AXIOS_ERROR && !e.message.includes('code 500')) {
+        return Toast.show({
+          type: 'error',
+          text1: e.response?.data?.message,
+        });
+      }
+      Toast.show({
+        type: 'error',
+        text1: 'something went wrong cannot get folder',
+      });
+    } finally {
+      store.dispatch(setRootLoading(false));
+    }
+  }, [user_id]);
+  const navigateToFolder = (id: string) => {
+    navigation.navigate({
+      name: 'Folder',
+      params: {
+        id,
+        historyStack: [id],
+      },
+    });
+  }
+
   useEffect(() => {
     if (isFocused) {
       (async() => {
+        fetchFolders();
         await getCategoryInfo({user_id:user_id});
       })()
     }
@@ -340,7 +402,7 @@ const Uploads = ({navigation}: {navigation: any}) => {
   return (
     <View style={styles.container}>
       <View style={styles.containerImage}>
-        <FilesHeader onBackPress={() => navigation.navigate('Home')} />
+        <FilesHeader onBackPress={() => navigation.navigate('Home')} navigation={navigation} />
       </View>
       <ScrollView style={styles.scrollView}>
         <View style={{flexDirection: 'row', justifyContent: 'space-between', paddingRight: 30}}>
@@ -424,6 +486,26 @@ const Uploads = ({navigation}: {navigation: any}) => {
             </View>
             <Text style={styles.count}>{category.other.count} items</Text>
           </Pressable>
+          {folders.map((folder) => {
+            return (
+              <Pressable
+                key={folder.id}
+                style={styles.rowItem}
+                onPress={() => {
+                  console.log(folder.id)
+                   navigateToFolder(folder.id);
+                }}>
+                <View style={styles.namegroup}>
+                  <FolderIcon  color="#ffffff"/>
+                  <View style={styles.name}>
+                    <Text style={styles.nameFont}>{folder.name}</Text>
+                    {/*<Text style={styles.timeFont}>{category.other.updated}</Text>*/}
+                  </View>
+                </View>
+                <Text style={styles.count}>{folder.count} items</Text>
+              </Pressable>
+            )
+          })}
         </View>
       </ScrollView>
     </View>

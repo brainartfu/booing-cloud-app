@@ -16,6 +16,7 @@ import {AXIOS_ERROR, BaseUrl, MAX_SIZE, store, types} from '../../../../shared';
 import Toast from 'react-native-toast-message';
 import Folder, {FolderProps} from './Folder';
 import {FileProps} from './File';
+import ImagePlusIcon from '../../../../Components/ImagePlusIcon/ImagePlusIcon';
 import NoDataFound from '../../../../Components/NoDataFound/NoDataFound';
 import {setRootLoading} from '../../../../shared/slices/rootSlice';
 import {useIsFocused} from '@react-navigation/native';
@@ -828,7 +829,7 @@ const FolderPage = ({navigation, route}: any) => {
   }, [isFocused]);
 
   return (
-    <LayoutWrapper
+    <LayoutWrapper navigation={navigation}
       title={folderData.name}
       onBackPress={goBack}
       headerMenuContent={
@@ -898,6 +899,11 @@ const FolderPage = ({navigation, route}: any) => {
                       marginBottom: 42,
                       minHeight: 24,
                     }}>
+                     
+                    <Pressable style={styles.button} onPress={() => setIsAddingFolders(true)}>
+                      <ImagePlusIcon style={{marginRight: 10}} />
+                      <Text style={styles.buttonText}>Folder</Text>
+                    </Pressable>                                 
                     {selectedIds.length > 0 && (
                       <>
                         <AntDesign
@@ -1012,6 +1018,20 @@ const styles = StyleSheet.create({
     paddingRight: 20,
     paddingTop: 18,
   },
+  button: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 10,
+    marginRight: 10,
+    borderRadius: 15,
+    backgroundColor: 'white',
+    flexDirection: 'row',
+  },
+  buttonText: {
+    color: '#9F9EB3',
+    fontFamily: 'Rubik-Regular', fontSize: 16,
+    fontWeight: '500',
+  },  
 });
 
 export default FolderPage;

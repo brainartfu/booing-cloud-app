@@ -31,8 +31,10 @@ import SimpleLineIcons from 'react-native-vector-icons/SimpleLineIcons';
 import AntDesign from 'react-native-vector-icons/AntDesign';
 import EvilIcons from 'react-native-vector-icons/EvilIcons';
 
+import {setStorage} from '../../../shared/slices/Auth/AuthSlice';
 import ManageApps from '../../../utils/manageApps';
 import NoDataFound from '../../../Components/NoDataFound/NoDataFound';
+import RecentFiles from './RecentFiles/RecentFiles';
 import {useIsFocused} from '@react-navigation/native';
 import {userUsedStorage, checkAutoDeleteFile} from '../../../shared/slices/Fragmentation/FragmentationService';
 import {setFreeStorage, setOccupy} from '../../../shared/slices/Devices/DevicesSlice';
@@ -130,7 +132,7 @@ const Dashboard = ({navigation}: {navigation: any}) => {
   // const [availabledStorage, setAvailableStorage] = useState<number>(1);
   // const [usedStoragePerGiga, setUsedStoragePerGiga] = useState<number>(0);
 
-  const [position, setPosition] = useState<{lat: number; lon: number}>();
+  // const [position, setPosition] = useState<{lat: number; lon: number}>();
   const [recentFiles, setRecentFiles] = useState<
     {name: string; id: string}[]
   >([]);
@@ -149,9 +151,20 @@ const Dashboard = ({navigation}: {navigation: any}) => {
       }
     | undefined
   >(undefined);
-  const [wallet, setWallet] = useState<Wallet>();
+  const [walletAmount, setWalletAmount] = useState<number>(0);
+  const [storageDetail, setStorageDetail] = useState<{
+    media: number, 
+    cache: number, 
+    other: number
+  }>({
+    media: 0,
+    cache: 0,
+    other: 0
+  });
   const isFocused = useIsFocused();
   const user_id = store.getState().authentication.userId;
+  const storageStats = store.getState().authentication.storage;
+  const [storage, setStorage] = useState(storageStats)
   const [sdCardStats, setSdCardStats] = useState({
     present: false,
     fullSize: 0,
@@ -168,28 +181,29 @@ const Dashboard = ({navigation}: {navigation: any}) => {
           });
         }
         await getWallet({user_id}).then(res => {
-          if (res.success) setWallet(res.data);
+          if (res.success) setWalletAmount(res.data?.amount);
         });
-        await getRecentFiles({user_id: user_id})
-          .then(response => {
-            if (response.success) {
-              setRecentFiles(response.data);
-            }
-          })
-          .catch(e => {
-            if (e.name === AXIOS_ERROR && !e.message.includes('code 500')) {
-              return Toast.show({
-                type: 'error',
-                text1: e.response?.data?.message,
-              });
-            }
-          });
+        // await getRecentFiles({user_id: user_id})
+        //   .then(response => {
+        //     if (response.success) {
+        //       setRecentFiles(response.data);
+        //     }
+        //   })
+        //   .catch(e => {
+        //     if (e.name === AXIOS_ERROR && !e.message.includes('code 500')) {
+        //       return Toast.show({
+        //         type: 'error',
+        //         text1: e.response?.data?.message,
+        //       });
+        //     }
+        //   });
       })();
     }
   }, [user_id, isFocused]);
 
   const requestLocationPermission = async () => {
     try {
+      console.log('asdfadsf')
       const granted = await PermissionsAndroid.request(
         PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
         {
@@ -200,6 +214,7 @@ const Dashboard = ({navigation}: {navigation: any}) => {
           buttonPositive: 'OK',
         },
       );
+      console.log(granted)
       // console.log('granted', granted);
       if (granted === 'granted') {
         // console.log('You can use Geolocation');
@@ -221,10 +236,10 @@ const Dashboard = ({navigation}: {navigation: any}) => {
         Geolocation.getCurrentPosition(
           position => {
             // console.log(position);
-            setPosition({
-              lat: position.coords.latitude,
-              lon: position.coords.longitude,
-            });
+            // setPosition({
+            //   lat: position.coords.latitude,
+            //   lon: position.coords.longitude,
+            // });
           },
           error => {
             // See error code charts below.
@@ -247,7 +262,7 @@ const Dashboard = ({navigation}: {navigation: any}) => {
 
   useEffect(() => {
     try {
-      getLocation();
+      // getLocation();
       getUserData();
     } catch (error) {
       console.log(error);
@@ -287,23 +302,15 @@ const Dashboard = ({navigation}: {navigation: any}) => {
     console.log(DeviceInfo.getDeviceId())
     DeviceInfo.getUniqueId().then(uniqueId => {
       deviceId = uniqueId;
-      // console.log(DeviceInfo.getDeviceId())
-      // console.log(DeviceInfo.getModel())
 
       DeviceInfo.getDeviceName().then(deviceName => {
         system = DeviceInfo.getSystemName();
-        console.log("deviceName: ", deviceName)
         const result = requestLocationPermission();
         result.then(res => {
-          // console.log('res is:', res);
           if (res) {
             Geolocation.getCurrentPosition(
               position => {
-                // console.log(position);
-                setPosition({
-                  lat: position.coords.latitude,
-                  lon: position.coords.longitude,
-                });
+                
 
                 console.log({
                   user_id: userData?._id,
@@ -329,10 +336,30 @@ const Dashboard = ({navigation}: {navigation: any}) => {
               },
               {enableHighAccuracy: true, timeout: 15000, maximumAge: 10000},
             );
+          } else {
+                addNewDevice({
+                  user_id: userData?._id,
+                  device_ref: deviceId,
+                  lat: 0,
+                  lon: 0,
+                  name: deviceName,
+                  type: system,
+                });
           }
         });
       });
     });
+    (async () => {
+      // const totalMediaSize = await ManageApps.getTotalMediaSize();
+      // console.log(totalMediaSize)
+      // const totalCacheSize = await ManageApps.getTotalCacheSize();
+      // console.log(totalCacheSize);
+      // store.dispatch(setStorage({media: totalMediaSize, cache: totalCacheSize}));
+      // setStorage({media: totalMediaSize, cache: totalCacheSize})  
+    })()  
+    // ManageApps.getTotalMediaSize().then((totalCacheSize) => {
+    //   console.log(totalCacheSize)
+    // })
   }, []);
 
   const getUserUsedStorage = async () => {
@@ -397,31 +424,28 @@ const Dashboard = ({navigation}: {navigation: any}) => {
       await ManageApps.checkNotificationPermission();
     })();
   }, []);
-  // useEffect(() => {
-  //   console.log(Device.brand);
-  //   if (Device.isDevice && Device.brand) {
-  //     getFreeDiskStorageAsync().then(freeDiskStorage => {
-  //       setFreeDiskSotrage(
-  //         Number((freeDiskStorage / Math.pow(1024, 3)).toFixed(2)),
-  //       );
-  //     });
-  //     getTotalDiskCapacityAsync().then(totalDiskStorage => {
-  //       setTotalDiskStorage(
-  //         Number((totalDiskStorage / Math.pow(1024, 3)).toFixed(2)),
-  //       );
-  //       setFreeSpacePerCent(
-  //         Number(((freeDiskStorage / totalDiskStorage) * 100).toFixed(0)),
-  //       );
-  //     });
-  //   }
-  // }, []);
-
+  useEffect(() => {
+    (async() => {
+      if (freeSpacePerCent) {
+        let media = await ManageApps.getTotalMediaSize();
+        let cache = await ManageApps.getTotalCacheSize();
+        console.log('get cache size', media, cache)
+        media =  media?(media / Math.pow(1024, 3))/(totalDiskStorage):0;
+        media = Math.ceil(media*100)/100;
+        cache =  cache?(cache / Math.pow(1024, 3))/(totalDiskStorage):0;
+        cache = Math.ceil(cache*100)/100;
+        const other =  100 - freeSpacePerCent - media - cache;
+        console.log('storage detail: ', media, cache, other);
+        setStorageDetail({media: media, cache: cache, other: other})
+      }
+    })();
+  }, [isFocused, freeSpacePerCent]);
   return (
     <View style={styles.container}>
       <LinearGradient
         style={styles.containerImage}
         colors={['#33A1F9', '#6DBDFE']}>
-        <DashboardHeader navigation={navigation} />
+        <DashboardHeader navigation={navigation} amount={walletAmount} />
       </LinearGradient>
       <ScrollView
         style={styles.scrollView}
@@ -438,9 +462,9 @@ const Dashboard = ({navigation}: {navigation: any}) => {
                   percent: freeSpacePerCent,
                   label: 'free space',
                 },
-                {color: '#FFC700', percent: 10, label: 'media'},
-                {color: '#4CE364', percent: 0, label: 'cache'},
-                {color: '#22215B', percent: 14, label: 'other'},
+                {color: '#FFC700', percent: storageDetail.media, label: 'media'},
+                {color: '#4CE364', percent: storageDetail.cache, label: 'cache'},
+                {color: '#22215B', percent: storageDetail.other, label: 'other'},
               ]}
               globalPercent={freeSpacePerCent}
               globalPercentStyles={{
@@ -552,41 +576,7 @@ const Dashboard = ({navigation}: {navigation: any}) => {
               Recent
             </Text>
           </View>
-          <View
-            style={{
-              width: '100%',
-              justifyContent: 'center',
-              alignItems: 'center',
-            }}>
-            {recentFiles.length !== 0 ? (
-              <View style={styles.recentFilesContainer}>
-                <View
-                  style={{
-                    flexDirection: 'row',
-                    alignItems: 'center',
-                    width: '100%',
-                    justifyContent: 'flex-start',
-                    flexWrap: 'wrap',
-                    paddingBottom: 20,
-                  }}>
-                  {recentFiles.map((file, ind) => {
-                    return <View key={ind} style={{
-                        alignItems: 'center',
-                        padding: 25,
-                        borderRadius: 25,
-                        width: '33%',
-                        height: 100,
-                      }}>
-                      {file.isDirectory?(<DirectoireView file={file} navigation={navigation} />):(<FileView file={file} navigation={navigation} />)}
-                      </View>
-                  })}
-                </View>
-              </View>
-            ) : (
-              <NoDataFound style={{marginBottom: 20}} />
-            )}            
-
-          </View>
+          <RecentFiles navigation={navigation} />
 
           <View>
             <Text style={styles.title}>
@@ -691,6 +681,7 @@ const Dashboard = ({navigation}: {navigation: any}) => {
           </View>          
         </View>
       </ScrollView>
+  
     </View>
   );
 };
@@ -736,15 +727,18 @@ const styles = StyleSheet.create({
     paddingTop: 20,
   },
   txtStorage: {
-    fontFamily: 'Rubik-Bold', fontSize: 20,
+    fontFamily: 'Rubik-Bold', 
+    fontSize: 20,
     lineHeight: 21,
-    letterSpacing: 0.25,
+    letterSpacing: 0.15,
     color: '#33a1f9',
   },
   available: {
-    fontFamily: 'Rubik-Bold', fontSize: 14,
+    fontFamily: 'Rubik-Bold', 
+    fontSize: 14,
     lineHeight: 21,
-    letterSpacing: 0.08,
+    letterSpacing: -0.25,
+
     color: '#C6C6C6',
   },
   container: {
@@ -782,17 +776,20 @@ const styles = StyleSheet.create({
     backgroundColor: '#33a1f9',
   },
   text: {
-    fontFamily: 'Rubik-Bold', fontSize: 16,
+    fontFamily: 'Rubik-Bold', 
+    fontSize: 16,
     letterSpacing: 0.25,
     color: 'white',
   },
   createAccount: {
-    fontFamily: 'Rubik-Regular', fontSize: 16,
+    fontFamily: 'Rubik-Regular', 
+    fontSize: 16,
     letterSpacing: 0.25,
     color: '#BDB8BF',
   },
   folderText: {
-    fontFamily: 'Rubik-Regular', fontSize: 13,
+    fontFamily: 'Rubik-Regular', 
+    fontSize: 13,
     color: 'black',
     marginTop: 5,
     textAlign: 'center',

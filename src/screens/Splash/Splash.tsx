@@ -5,6 +5,23 @@ import mime from 'mime-types';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {useIsFocused} from '@react-navigation/native';
 import {types} from '../../shared';
+
+import { AppRegistry } from 'react-native';
+
+const ScanStorage = async (data) => {
+	console.log('ScanStorage')
+	console.log(data);
+	setTimeout(() => {
+		console.log('end scaning');
+		return true;
+	}, 10000)
+	setTimeout(() => {
+		console.log('still alive????????');
+	}, 15000)
+}
+console.log('ScanStorage start')
+AppRegistry.registerHeadlessTask('ScanStorage', () => ScanStorage);
+
 const Splash = () => {
 	const [fetching, setFetching] = useState('');
 	const [lastUpdate, setLastUpdate] = useState(0);

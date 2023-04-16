@@ -9,17 +9,17 @@ import {store} from '../../../../shared';
 import LinearGradient from 'react-native-linear-gradient';
 import {Wallet} from '../../../../models/Wallet';
 
-const DashboardHeader = ({navigation}: {navigation: any}) => {
-  const isFocused = useIsFocused();
-  const [wallet, setWallet] = useState<Wallet>();
+const DashboardHeader = ({navigation, amount}: {navigation: any, amount: number}) => {
+  // const isFocused = useIsFocused();
+  // const [wallet, setWallet] = useState<Wallet>();
 
-  useEffect(() => {
-    if (isFocused) {
-      (async () => {
-        setWallet(store.getState().wallet.data);
-      })();
-    }
-  }, [isFocused]);
+  // useEffect(() => {
+  //   if (isFocused) {
+  //     (async () => {
+  //       setWallet(store.getState().wallet.data);
+  //     })();
+  //   }
+  // }, [isFocused]);
 
   return (
     <LinearGradient
@@ -34,7 +34,7 @@ const DashboardHeader = ({navigation}: {navigation: any}) => {
       </View>
       <View style={styles.coins}>
         <Text style={styles.title}>Booing Balance</Text>
-        <Text style={styles.amount}>{wallet?.amount} Boo</Text>
+        <Text style={styles.amount}>{amount} Boo</Text>
         {/* <Text style={styles.title}>12 | +E 56.03</Text> */}
       </View>
       <View style={styles.bottomBar}>
