@@ -125,13 +125,13 @@ export default function DuplicateList({
       }, []);
 
       let isDeleted;
-      if (type === 'images') {
+      if (type === 'image') {
         isDeleted = await ManageApps.deleteImages(paths);
       }
-      if (type === 'videos') {
+      if (type === 'video') {
         isDeleted = await ManageApps.deleteVideos(paths);
       }
-      if (type === 'audios') {
+      if (type === 'audio') {
         isDeleted = await ManageApps.deleteAudios(paths);
       }
 

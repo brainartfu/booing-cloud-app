@@ -47,3 +47,13 @@ export const updateGeoLocation = async (data: {
     data,
   });
 };
+
+
+export const SmartSyncService = async () => {
+  return Executor({
+    method: 'get',
+    url: BaseUrl + '/booing/logged-in-user/checkFragments',
+    isSilent: true,
+    withoutToast: true
+  });
+}

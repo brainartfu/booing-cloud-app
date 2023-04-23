@@ -9,6 +9,8 @@ export const AuthentificationInitialState = {
   errorMessage: '',
   userId: undefined,
   token: '',
+  lastFetchTime: 0,
+  filesList: [],
   storage: {
     media: 0,
     cache: 0
@@ -48,6 +50,24 @@ export const authentificationSlice = createSlice({
       console.log('storage', action.payload)
       state.storage = {...state.storage, ...action.payload};
     },
+    setLastFetchTime: (
+      state: {
+        lastFetchTime: any;
+      },
+      action: PayloadAction<any>,
+    ) => {
+      console.log('lastFetchTime', action.payload)
+      state.lastFetchTime = action.payload;
+    },
+    setFilesList: (
+      state: {
+        filesList: any;
+      },
+      action: PayloadAction<any>,
+    ) => {
+      console.log('filesList', action.payload)
+      state.filesList = action.payload;
+    },
     saveUserAvatar: (
       state: {
         loggedInUser: User | undefined;
@@ -73,5 +93,13 @@ export const authentificationSlice = createSlice({
   },
 });
 
-export const {setLoggedInUser, disconnect, setErrorMessage, setToken, saveUserAvatar, setStorage} =
-  authentificationSlice.actions;
+export const {
+  setLoggedInUser, 
+  disconnect, 
+  setErrorMessage, 
+  setToken, 
+  saveUserAvatar, 
+  setStorage, 
+  setLastFetchTime, 
+  setFilesList
+} = authentificationSlice.actions;

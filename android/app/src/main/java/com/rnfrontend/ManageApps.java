@@ -129,8 +129,6 @@ public class ManageApps extends ReactContextBaseJavaModule {
     public String getName() {
         return "ManageApps";
     }
-
-
     public String getThumbnailBase64(Uri uri, int mediaType)  {
         int size = 80;
         ContentResolver cr = getReactApplicationContext().getContentResolver();
@@ -217,6 +215,27 @@ public class ManageApps extends ReactContextBaseJavaModule {
 
     interface JunkData {
         void onComplete(WritableMap result);
+    }
+
+    @ReactMethod
+    public void getThumbnailBase64FromPath(String path, Boolean isImage, Promise promise) {
+        int size = 80;
+        Bitmap bitmap = null;
+        if(isImage == true) {
+            bitmap = ThumbnailUtils.extractThumbnail(BitmapFactory.decodeFile(path), size, size);
+        } else {
+            bitmap = ThumbnailUtils.createVideoThumbnail(path, MediaStore.Images.Thumbnails.MINI_KIND);
+        }
+
+        if (bitmap != null) {
+            ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+            bitmap.compress(Bitmap.CompressFormat.JPEG, 100, byteArrayOutputStream);
+            byte[] byteArray = byteArrayOutputStream.toByteArray();
+            String encoded = Base64.encodeToString(byteArray, Base64.DEFAULT);
+            promise.resolve("data:image/jpeg;base64," + encoded);
+            return ;
+        }
+        promise.resolve(null);
     }
 
     @ReactMethod
@@ -1094,6 +1113,7 @@ public class ManageApps extends ReactContextBaseJavaModule {
         createNotificationChannel();
       
         Intent intent = new Intent(getCurrentActivity(), getCurrentActivity().getClass());
+        intent.putExtra("stackName", "ClearData");
         PendingIntent sender = PendingIntent.getActivity(getCurrentActivity(), 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
 
         NotificationCompat.Builder builder = new NotificationCompat.Builder(getReactApplicationContext(), "123")

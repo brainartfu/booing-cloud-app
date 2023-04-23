@@ -20,12 +20,12 @@ const ScanStorage = async (data) => {
 	}, 15000)
 }
 console.log('ScanStorage start')
-AppRegistry.registerHeadlessTask('ScanStorage', () => ScanStorage);
+// AppRegistry.registerHeadlessTask('ScanStorage', () => ScanStorage);
 
 const Splash = () => {
 	const [fetching, setFetching] = useState('');
 	const [lastUpdate, setLastUpdate] = useState(0);
-	const [fileList, setFileList] = useState({});
+	const [fileList, setFileList] = useState([]);
 	const isFocused = useIsFocused();
 	const delay = (delayInms) => {
 		return new Promise(resolve => setTimeout(resolve, delayInms));
@@ -35,33 +35,39 @@ const Splash = () => {
 		// const delaytime = await delay(1500);	
 		const files = await RNFS.readdir(filePath);
 		const subPath = filePath.split('/').pop();
-		const allFiles = {}
+		let allFiles = [];
 		if (files) {
 			for (let i = 0; i < files.length; i++) {
 				const rpath = `${filePath}/${files[i]}`;
 			    const fileStat = await RNFS.stat(rpath);
+			    // console.log(fileStat.path)
 				const rsubPath = files[i].split('/').pop();
-		    	if (fileStat.mtime > lastUpdate) {
-				    if (fileStat.isDirectory()) {
-				    	if (files[i] !== 'Android' && !files[i].startsWith('.')) {
-							const subFiles = await fetchFiles(rpath);
-							if (Object.keys(subFiles).length !== 0) {
-								allFiles[rsubPath] = subFiles;
-							}
-				    	}
-				    } else {
-				    	const hash = await RNFS.hash(fileStat.path, 'md5');
-				    	allFiles[rsubPath] = {
-							ctime: fileStat.ctime,
-							mtime: fileStat.mtime,
-							path: fileStat.path,
-							size: fileStat.size,
-							hash: hash
-				    	}
-				    }
-		    	} else {
-		    		console.log('not changed files')
-		    	}
+			    if (fileStat.isDirectory()) {
+			    	if (files[i] !== 'Android' && !files[i].startsWith('.')) {
+						const subFiles = await fetchFiles(rpath);
+						if (Object.keys(subFiles).length !== 0) {
+							allFiles = [ ...allFiles, ...subFiles];
+						}
+			    	}
+			    } else {
+			    	if (fileStat.mtime <= lastUpdate) {
+			    		const file = fileList.find(obj => obj.path===fileStat.path);
+			    		if (file) {
+				    		allFiles.push(file);
+				    		console.log(rpath, 'not changed files')
+				    		continue ;
+			    		}
+			    	}
+			    	console.log('new File ', fileStat.path)
+			    	const hash = await RNFS.hash(fileStat.path, 'md5');
+			    	allFiles.push({
+						ctime: fileStat.ctime,
+						mtime: fileStat.mtime,
+						path: fileStat.path,
+						size: fileStat.size,
+						hash: hash
+			    	})
+			    }
 			}
 		}
 		return allFiles;
@@ -81,11 +87,31 @@ const Splash = () => {
 		console.log('fetchFiles')
 		const fetchTime = Date.now();
 		const files = await fetchFiles(RNFS.ExternalStorageDirectoryPath);
-		console.log(files);
-		await AsyncStorage.setItem('fileData', JSON.stringify(files));
-		await AsyncStorage.setItem('fetchTime', `${fetchTime}`);
+		// console.log(files)
+		setLastUpdate(fetchTime);
+		setFileList(files);
+		findDuplicatedFiles(files);
+		// separateByCategory(files);
+		// await AsyncStorage.setItem('fileData', JSON.stringify(files));
+		// await AsyncStorage.setItem('fetchTime', `${fetchTime}`);
 		// separateByCategory(files);
 
+	}
+	const findDuplicatedFiles = (files) => {
+		const duplicateArr = {};
+		files.forEach((obj) => {
+		  if (duplicateArr.hasOwnProperty(obj.hash)) {
+		    duplicateArr[obj.hash].push(obj);
+		  } else {
+		    duplicateArr[obj.hash] = [obj];
+		  }
+		});
+		for (const [key, value] of Object.entries(duplicateArr)) {
+		  if (value.length === 1) {
+		    delete duplicateArr[key];
+		  }
+		}		
+		console.log(duplicateArr)
 	}
 	const handleRetrieve = async () => {
 		const fileData = await AsyncStorage.getItem('fileData')
@@ -100,7 +126,7 @@ const Splash = () => {
 		})()
 	}, [])
 	useEffect(() => {
-		console.log(fileList)
+		// console.log(fileList)
 	}, [fileList])
 	return (
 		<>

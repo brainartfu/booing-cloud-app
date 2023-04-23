@@ -204,16 +204,16 @@ export function DateList({
 
       let isDeleted;
       console.log(paths)
-      if (type === 'images') {
+      if (type === 'image') {
         isDeleted = await ManageApps.deleteImages(paths);
       }
-      if (type === 'videos') {
+      if (type === 'video') {
         isDeleted = await ManageApps.deleteVideos(paths);
       }
-      if (type === 'audios') {
+      if (type === 'audio') {
         isDeleted = await ManageApps.deleteAudios(paths);
       }
-      if (type === 'apks') {
+      if (type === 'apk') {
         isDeleted = await ManageApps.deleteApks(paths);
       }
       setDeleteBtnProps({disabled: true, show: true});
@@ -281,22 +281,22 @@ export function DateList({
       console.log(times)
       const newData = {today: [], yesterday: [], thisWeek: [], lastWeek: [], thisMonth: [], lastMonth: [], thisYear: [], lastYear: [], longAgo: []};
       for (let i = 0; i < data.length; i++) {
-        console.log(data[i]['created'])
-        if (data[i]['created'] > times['today']) {
+        console.log(data[i]['ctime'])
+        if (data[i]['ctime'] > times['today']) {
           newData['today'].push(data[i]);
-        } else if (data[i]['created'] > times['yesterday']) {
+        } else if (data[i]['ctime'] > times['yesterday']) {
           newData['yesterday'].push(data[i]);
-        } else if (data[i]['created'] > times['thisWeek']) {
+        } else if (data[i]['ctime'] > times['thisWeek']) {
           newData['thisWeek'].push(data[i]);
-        } else if (data[i]['created'] > times['lastWeek']) {
+        } else if (data[i]['ctime'] > times['lastWeek']) {
           newData['lastWeek'].push(data[i]);
-        } else if (data[i]['created'] > times['thisMonth']) {
+        } else if (data[i]['ctime'] > times['thisMonth']) {
           newData['thisMonth'].push(data[i]);
-        } else if (data[i]['created'] > times['lastMonth']) {
+        } else if (data[i]['ctime'] > times['lastMonth']) {
           newData['lastMonth'].push(data[i]);
-        } else if (data[i]['created'] > times['thisYear']) {
+        } else if (data[i]['ctime'] > times['thisYear']) {
           newData['thisYear'].push(data[i]);
-        } else if (data[i]['created'] > times['lastYear']) {
+        } else if (data[i]['ctime'] > times['lastYear']) {
           newData['lastYear'].push(data[i]);
         } else {
           newData['longAgo'].push(data[i]);

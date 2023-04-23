@@ -111,8 +111,7 @@ function VerificationCode({route, navigation}: {route: any; navigation: any}) {
         code: code,
         isSignup: isSignup,
       }).then(res => {
-        if (redirect) navigation.navigate(redirect)
-        else if (step === 1 && isSignup) navigation.navigate('Login');
+        if (step === 1 && isSignup) navigation.navigate('Login');
         else if (step === 1 && !isSignup) setStep(++step);
       });
     }
@@ -153,10 +152,9 @@ function VerificationCode({route, navigation}: {route: any; navigation: any}) {
     })   
   }
   useEffect(() => {
-    const {user_id, isSignup, redirect} = route.params;
+    const {user_id, isSignup} = route.params;
     console.log(user_id);
     setUserId(user_id);
-    if (redirect) setRedirectPath(redirect);
     setIsSignup(isSignup);
     if (isSignup) setStep(++step);
   }, []);

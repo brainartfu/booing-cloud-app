@@ -10,14 +10,22 @@ import {useIsFocused} from '@react-navigation/native';
 import {store} from '../../../../shared';
 import {setRootLoading} from '../../../../shared/slices/rootSlice';
 import {sellSpace} from '../../../../shared/slices/Fragmentation/FragmentationService';
-import {setStorage} from '../../../../shared/slices/Auth/AuthSlice';
+import {setStorage, setLastFetchTime, setFilesList} from '../../../../shared/slices/Auth/AuthSlice';
 import {CleanModal, ClearDataHeader} from './components';
 import Buffer from 'buffer';
+import mime from 'mime-types';
+import {types} from '../../../../shared';
+import {useSelector} from 'react-redux';
 
 const calcSpace = (arr: {size: number}[], field = 'size', minVal = 0) =>
   arr.reduce((acc, elem) => acc + (elem as any)[field], 0) > minVal
     ? arr.reduce((acc, elem) => acc + (elem as any)[field], 0)
     : 0;
+
+const addId = (arr: []) => {
+  arr.forEach(e => ((e as any).id = nanoid(20)));
+  return arr;
+};    
 
 function ClearData({route, navigation}: {navigation: any; route: any}) {
   const {freeDiskStorage} = route.params;
@@ -26,9 +34,12 @@ function ClearData({route, navigation}: {navigation: any; route: any}) {
     {show: true, loading: false},
   );
   const [media, setMedia] = useState({
-    images: [],
-    videos: [],
-    audios: []
+    document: [],
+    apk: [],
+    video: [],
+    audio: [],
+    image: [],
+    download: [],
   });
   const [images, setImages] = useState([]);
   const [videos, setVideos] = useState([]);
@@ -46,6 +57,9 @@ function ClearData({route, navigation}: {navigation: any; route: any}) {
   const [categoryView, setCategoryView] = useState('All')
   const [refresh, setRefresh] = useState(true)
   const user_id = store.getState().authentication.userId;
+  // const lastFetchTime = useSelector(state => state.authentication.lastFetchTime);
+  const lastFetchTime = useSelector(state => state.authentication.lastFetchTime);
+  const filesList = useSelector(state => state.authentication.filesList);
 
   const [progressProps, setProgressProps] = useState({
     text: '',
@@ -71,43 +85,119 @@ function ClearData({route, navigation}: {navigation: any; route: any}) {
       true               // set silent
     );
   }
+  const fetchFiles = useCallback(async (filePath) => {
+    // const delaytime = await delay(1500); 
+    showMessage({text: `fetching ${filePath}`, progress: 0.2})
+    const files = await RNFS.readdir(filePath);
+    const subPath = filePath.split('/').pop();
+    let allFiles = [];
+    if (files) {
+      for (let i = 0; i < files.length; i++) {
+        const rpath = `${filePath}/${files[i]}`;
+          const fileStat = await RNFS.stat(rpath);
+          if (fileStat.isDirectory()) {
+            if (files[i] !== 'Android' && !files[i].startsWith('.')) {
+            const subFiles = await fetchFiles(rpath);
+            if (Object.keys(subFiles).length !== 0) {
+              allFiles = [ ...allFiles, ...subFiles];
+            }
+            }
+          } else {
+            if (fileStat.mtime <= lastFetchTime) {
+              const file = filesList.find(obj => obj.path===fileStat.path);
+              if (file) {
+                allFiles.push(file);
+                console.log(rpath, 'not changed files')
+                continue ;
+              }
+            }
+            console.log('new File ', fileStat.path)
+            const hash = await RNFS.hash(fileStat.path, 'md5');
+            allFiles.push({
+              ctime: fileStat.ctime,
+              mtime: fileStat.mtime,
+              path: fileStat.path,
+              size: fileStat.size,
+              hash: hash,
+              name: fileStat.path.split('/').pop()
+            })
+          }
+      }
+    }
+    return addId(allFiles);
+  }, [isFocused])
   const delay = (delayInms) => {
     return new Promise(resolve => setTimeout(resolve, delayInms));
   }  
+  const separateByCategory = useCallback(async (files) => {
+    const allFilesByCategory = {document: [], apk: [], video: [], audio: [], image: [], download: []};
+    for (let i = 0; i < files.length; i++) {
+      const mimeType = await mime.lookup(files[i]['path']);
+      const validType = Object.keys(types).find(key => (types as any)[key](mimeType));
+      if (validType) {
+        if (validType === 'image' || validType === 'video') {
+          const thumnail = await ManageApps.getThumbnailBase64FromPath(files[i]['path'], validType==='image');
+          allFilesByCategory[validType].push({...files[i], thumbnail: thumnail});
+        } else {
+          allFilesByCategory[validType].push(files[i]);
+        }
+      }
+    }
+    setMedia(allFilesByCategory)
+    findDuplicatedFiles(allFilesByCategory);
+  }, [isFocused, media])
+  const findDuplicatedFiles = useCallback((categoriedFiles) => {
+    const duplicateArr = {document: [], apk: [], video: [], audio: [], image: [], download: []};
+    for (let type in categoriedFiles) {
+      const arr = [];
+      showMessage({text: `find duplicated ${type}s`, progress: 0.8})
+      categoriedFiles[type].forEach((obj) => {
+        if (arr.hasOwnProperty(obj.hash)) {
+          arr[obj.hash].push(obj);
+        } else {
+          arr[obj.hash] = [obj];
+        }
+      });
+      for (const [key, value] of Object.entries(arr)) {
+        if (value.length > 1) {
+          duplicateArr[type] = [...duplicateArr[type], ...value]
+        }
+      }
+    }
+    // console.log(duplicateArr)
+    setDuplicate(duplicateArr)
+  }, [isFocused, media])
   const scanUserStorage = useCallback(async () => {
-    // console.log(await ManageApps.getImages())
-    // console.log(await ManageApps.getVideos())
-    // console.log(await ManageApps.getAudios())
-    // const uris = [
-    //   "content://media/external/images/media/35",
-    //   "content://media/external/images/media/32",
-    //   "content://media/external/images/media/33",
-    //   "content://media/external/images/media/34",
-    //   "content://media/external/images/media/54",
-    // ]
-    // console.log(await ManageApps.getMediaThumbnails(uris, true))
-    // console.log('total media size', await ManageApps.getTotalMediaSize()) //
-    // console.log('total cache size', await ManageApps.getTotalCacheSize()) //
-    // console.log(await ManageApps.getAllFiles())
-    // console.log(await ManageApps.getAllApks())
-
+    // setTimeout(() => {
+    //   setShowModal({show: false, loading: false});
+    // }, 200);
+    // setShowData(true);    
     try {
       setClearManually(false);
       setRescanOnFocus(false);
       store.dispatch(setRootLoading(false));
       setShowModal({show: true, loading: true});
-      // setApps(addId(await ManageApps.getAllInstalledApps()));
-      showMessage({text: 'fetching images ...', progress: 0});
-      const allImages = addId(await ManageApps.getImages());
-      showMessage({text: 'fetching videos ...', progress: 0.15});
-      const allVideos = addId(await ManageApps.getVideos());
-      showMessage({text: 'fetching audio files ...', progress: 0.3});
-      const allAudios = addId(await ManageApps.getAudios());
-      await findDuplicateFiles({images: allImages, videos: allVideos, audios: allAudios});
-      showMessage({text: 'find all apks ...', progress: 0.85});
-      setMedia({images: allImages, videos: allVideos, audios: allAudios});
-      showMessage({text: 'done !', progress: 1});
-      setApps(addId(await ManageApps.getAllApks()))
+
+      const fetchTime = Date.now();
+      const files = await fetchFiles(RNFS.ExternalStorageDirectoryPath);
+      store.dispatch(setLastFetchTime(fetchTime));
+      store.dispatch(setFilesList(files));
+
+      await separateByCategory(files)
+      // store.dispatch(setRootLoading(false));
+      // setShowModal({show: true, loading: true});
+      // // setApps(addId(await ManageApps.getAllInstalledApps()));
+      // showMessage({text: 'fetching images ...', progress: 0});
+      // const allImages = addId(await ManageApps.getImages());
+      // showMessage({text: 'fetching videos ...', progress: 0.15});
+      // const allVideos = addId(await ManageApps.getVideos());
+      // showMessage({text: 'fetching audio files ...', progress: 0.3});
+      // const allAudios = addId(await ManageApps.getAudios());
+      // await findDuplicateFiles({images: allImages, videos: allVideos, audios: allAudios});
+      // showMessage({text: 'find all apks ...', progress: 0.85});
+      // setMedia({images: allImages, videos: allVideos, audios: allAudios});
+      // showMessage({text: 'done !', progress: 1});
+      // setApps(addId(await ManageApps.getAllApks()))
       // const delaytime = await delay(1000);
     } catch (e: any) {
       console.log(e.stack);
@@ -160,60 +250,18 @@ function ClearData({route, navigation}: {navigation: any; route: any}) {
     // }
   };
 
+  // useEffect(() => {
+  //   console.log(lastFetchTime, filesList)
+  // }, [lastFetchTime, filesList])
+
   const refechByLabel = async (ids: string[], type: string) => {
     console.log('refechByLabel', ids, type)
-    if (type === 'images' || type === 'videos' || type === 'audios') {
+    if (type === 'image' || type === 'video' || type === 'audio') {
       setDuplicate({...duplicate, [type]: duplicate[type].filter((item: any) => !ids.includes(item.id))});
       setMedia({...media, [type]: media[type].filter((item: any) => !ids.includes(item.id))});
-    } else if (type === 'apks') {
-      setApps(apps.filter((item: any) => !ids.includes(item.id)))
     }
   };
-  
-  const findDuplicateFiles = async (media) => {
-    let duplicatedFiles = {};
-    let pro = 0.3;
-    for (let type in media) {
-      pro = Math.round((pro + 0.15) * 100) / 100;
-      showMessage({text: `find duplicated ${type} ...`, progress: pro});
-      let data = media[type];
-      let dupleFiles = [];
-      data.sort((a, b) => a.size - b.size);
-      let temp = "";
-      let sizeArr = {};
-      for (let i = 0; i < data.length; i++) {
-        if (sizeArr[data[i].size]) sizeArr[data[i].size].push(data[i]);
-        else sizeArr[data[i].size] = [data[i]]
-      }
-      for (let key in sizeArr) {
-        if (sizeArr[key].length > 1) {
-          const arr = sizeArr[key];
-          for (let i = 0; i < arr.length; i++) {
-            arr[i]['temp'] = await RNFS.read(arr[i].path, 1000, 0, 'base64');
-          }
-          for (let i = 0; i < arr.length; i++) {
-            for (let j = i+1; j < arr.length; j++) {
-              if (arr[i]['temp'] === arr[j]['temp']) {
-                if (!arr[i]['dupl']) {
-                  arr[i]['dupl'] = nanoid(20);
-                  // dupleFiles[arr[i]['dupl']] = [arr[i]];
-                  dupleFiles.push(arr[i])
-                }
-                if (!arr[j]['dupl']) {
-                 arr[j]['dupl'] = arr[i]['dupl'];
-                  // dupleFiles[arr[i]['dupl']].push(arr[j]);
-                  dupleFiles.push(arr[j]) 
-                }
-              } else console.log('differnt')
-            }
-          }
-        }
-      }
-      duplicatedFiles[type] = dupleFiles;
-    }
-    setDuplicate(duplicatedFiles)
-  }
-
+ 
   useEffect(() => {
     const backAction = (e) => {
       if (categoryView !== 'All') {
@@ -333,41 +381,41 @@ function ClearData({route, navigation}: {navigation: any; route: any}) {
                   )}
 
                   <DateList
-                    data={media.images as []}
+                    data={media.image as []}
                     label="Pictures"
-                    type="images"
-                    size={calcSpace(media.images)}
+                    type="image"
+                    size={calcSpace(media.image)}
                     removeDeletedItems={removeDeletedItems}
                     refetchByLabel={refechByLabel}
                     setCategoryView={setCategoryView}
                     categoryView={categoryView}
                   />
                   <DateList
-                    data={media.videos as []}
+                    data={media.video as []}
                     label="Videos"
-                    type="videos"
+                    type="video"
                     removeDeletedItems={removeDeletedItems}
-                    size={calcSpace(media.videos)}
+                    size={calcSpace(media.video)}
                     refetchByLabel={refechByLabel}
                     setCategoryView={setCategoryView}
                     categoryView={categoryView}
                   />
                   <DateList
-                    data={media.audios as []}
+                    data={media.audio as []}
                     label="Music"
-                    type="audios"
+                    type="audio"
                     removeDeletedItems={removeDeletedItems}
-                    size={calcSpace(media.audios)}
+                    size={calcSpace(media.audio)}
                     refetchByLabel={refechByLabel}
                     setCategoryView={setCategoryView}
                     categoryView={categoryView}
                   />
                   <DateList
-                    data={apps as []}
+                    data={media.apk as []}
                     label="APK"
-                    type="apks"
+                    type="apk"
                     removeDeletedItems={removeDeletedItems}
-                    size={calcSpace(apps)}
+                    size={calcSpace(media.apk)}
                     refetchByLabel={refechByLabel}
                     setCategoryView={setCategoryView}
                     categoryView={categoryView}
@@ -377,7 +425,7 @@ function ClearData({route, navigation}: {navigation: any; route: any}) {
                     setCategoryView={setCategoryView}
                     refetchByLabel={refechByLabel}
                     categoryView={categoryView}
-                    apps={apps.filter((item: any) => !item.installed)}
+                    apps={media.apk.filter((item: any) => !item.installed)}
                   />
                   <DuplicateWrapper
                     data={duplicate}

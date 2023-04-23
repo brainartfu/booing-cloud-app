@@ -304,6 +304,7 @@ dependencies {
         implementation jscFlavor
     }
     implementation project(':react-native-fs')
+    implementation project(':react-native-notifications')
     // implementation project(':react-native-paypal')
 }
 

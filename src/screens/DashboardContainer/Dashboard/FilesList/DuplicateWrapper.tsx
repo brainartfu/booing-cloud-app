@@ -138,7 +138,7 @@ export function DuplicateWrapper({
             </View>
             <SafeAreaView style={{paddingTop: 10, paddingBottom: 10}}>
                <FlatList
-                 data={data['images']}
+                 data={data['image']}
                  renderItem={renderFile}
                  keyExtractor={item => item.id}
                  horizontal
@@ -159,26 +159,26 @@ export function DuplicateWrapper({
         {categoryView === 'Duplicate' && (
           <>
             <DuplicateList
-              data={data['images']}
+              data={data['image']}
               label="Duplicate Images"
-              type="images"
-              size={calcSpace(data['images'])}
+              type="image"
+              size={calcSpace(data['image'])}
               removeDeletedItems={removeDeletedItems}
               refetchByLabel={refetchByLabel}
             />
             <DuplicateList
-              data={data['videos']}
+              data={data['video']}
               label="Duplicate Videos"
-              type="videos"
-              size={calcSpace(data['videos'])}
+              type="video"
+              size={calcSpace(data['video'])}
               removeDeletedItems={removeDeletedItems}
               refetchByLabel={refetchByLabel}
             />
             <DuplicateList
-              data={data['audios']}
+              data={data['audio']}
               label="Duplicate Music"
-              type="audios"
-              size={calcSpace(data['audios'])}
+              type="audio"
+              size={calcSpace(data['audio'])}
               removeDeletedItems={removeDeletedItems}
               refetchByLabel={refetchByLabel}
             />

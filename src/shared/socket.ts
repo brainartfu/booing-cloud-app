@@ -15,8 +15,8 @@ const answerConnections = {};
 const offerConnections = {};
 const MAXIMUM_SIZE_DATA_TO_SEND = 150000;
 const BUFFER_THRESHOLD  = 150000;
-// const SOCKET_URL = "http://10.0.2.2:3001/";
-const SOCKET_URL = "https://booing-server.onrender.com/";
+const SOCKET_URL = "http://10.0.2.2:3001/";
+// const SOCKET_URL = "https://booing-server.onrender.com/";
 
 export default function useSocket() {
   const user_id = store.getState().authentication.userId;

@@ -1,7 +1,7 @@
 import {createBottomTabNavigator} from '@react-navigation/bottom-tabs';
-import {NavigationContainer} from '@react-navigation/native';
+import {NavigationContainer, useNavigation} from '@react-navigation/native';
 import React, {useEffect} from 'react';
-import {Image, View} from 'react-native';
+import {Image, View, Linking, NativeEventEmitter, NativeModules} from 'react-native';
 import {
   Account,
   Apks,
@@ -38,13 +38,66 @@ import FolderPage from './Files/FolderPage/FolderPage';
 import SearchPage from './Files/SearchPage/SearchPage';
 import useSocket from '../../shared/socket';
 import {HomeIcon, FilesIcon, AccountIcon} from '../../Components/TabbarIcon';
+import {Notifications} from 'react-native-notifications';
+
 const Stack = createBottomTabNavigator();
 const DashboardContainer =  () => {
   const {initSocket, createOffer} = useSocket();
   const device = store.getState().devices;
   const user_id = store.getState().authentication.userId;
+  const handleNotificationClick = (event) => {
+    // Get the notification extra data
+    const extraData = event?.notification?.data;
+    console.log(extraData)
+    // Check if the extra data contains the "stackName" key and its value is "ClearData"
+    // if (extraData?.stackName === 'ClearData') {
+    //   // Navigate to the "ClearData" page using React Navigation
+    //   const navigation = useNavigation();
+    //   navigation.navigate('ClearData');
+    // }
+  };
+
   useEffect(() => {
     initSocket();
+    const showNotification = (title, message) => {
+      Notifications.postLocalNotification({
+        body: message,
+        title: title,
+        category: 'SOME_CATEGORY',
+        link: 'localNotificationLink',
+        fireDate: new Date() // only iOS
+      });
+    };
+    // Notifications.setNotificationChannel({
+    //     channelId: 'my-channel',
+    //     name: 'My Channel',
+    //     importance: 5,
+    //     description: 'My Description',
+    //     enableLights: true,
+    //     enableVibration: true,
+    //     groupId: 'my-group', // optional
+    //     groupName: 'My Group', // optional, will be presented in Android OS notification permission
+    //     showBadge: true,
+    //     vibrationPattern: [200, 1000, 500, 1000, 500],
+    // })
+  
+    // showNotification('New message', 'You have a new message!');
+
+    // Notifications.getInitialNotification()
+    // .then((notification) => {
+    //   console.log("Initial notification was:", (notification ? notification.payload : 'N/A'));
+    //   })      
+    // .catch((err) => console.error("getInitialNotifiation() failed", err));
+
+    // const openedFunc = Notifications.events().registerNotificationOpened((notification: Notification, completion) => {
+    //   console.log(`Notification opened: ${notification.payload}`);
+    //   // completion({alert: false, sound: false, badge: false});
+    //   completion();
+    // });  
+    // return () => {
+    //   openedFunc.remove()
+    //  Notifications.events().unregisterNotificationOpened();
+    // }
   }, [])
  
   return (

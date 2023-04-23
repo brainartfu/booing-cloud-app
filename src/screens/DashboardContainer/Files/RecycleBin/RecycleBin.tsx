@@ -402,7 +402,6 @@ const RecycleBin = ({navigation}: any) => {
             )}
           </View>
         </View>
-    }
     </LayoutWrapper>
   );
 };

@@ -12,10 +12,20 @@ import Octicons from "react-native-vector-icons/Octicons";
 import AntDesign from "react-native-vector-icons/AntDesign"
 import { Logout } from "../../Authentication/Logout/Logout";
 import { securityPng, userGroupPng } from "../../../images/export";
+import {SmartSyncService} from '../../../shared/slices/Devices/DevicesService';
+
 const Account = ({ navigation }: { navigation: any }) => {
   const [isEnabled, setIsEnabled] = useState(false);
   const toggleSwitch = () => setIsEnabled((previousState) => !previousState);
 
+  const smartSync = () => {
+    console.log('smartSync')
+    SmartSyncService().then(res=> {
+      console.log(res);
+    }).catch(err=> {
+      console.log(err)
+    })
+  }
 
   return (
     <View style={styles.container}>
@@ -94,7 +104,7 @@ const Account = ({ navigation }: { navigation: any }) => {
           </View>
           <View style={styles.sectionView}>
             <Text style={styles.title}>Synchronization</Text>
-{/*            <Pressable style={styles.button}>
+            <Pressable style={styles.button} onPress={smartSync}>
               <View style={{ flexDirection: "row" }}>
                 <MaterialCommunityIcons
                   style={styles.icon}
@@ -111,7 +121,7 @@ const Account = ({ navigation }: { navigation: any }) => {
                 onValueChange={toggleSwitch}
                 value={isEnabled}
               />
-            </Pressable>*/}
+            </Pressable>
             <Pressable style={[styles.button, {borderTopLeftRadius: 10, borderTopRightRadius: 10, borderBottomLeftRadius: 10, borderBottomRightRadius: 10}]} onPress={() => navigation.navigate("RegistredDevices")}>
               <View style={{ flexDirection: "row" }}>
                 <Octicons

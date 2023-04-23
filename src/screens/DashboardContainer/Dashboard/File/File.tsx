@@ -75,12 +75,12 @@ const File = ({
             style={styles.image}
             onLoadEnd={loaded}
           />
-          <Text style={{width: 65, paddingTop: 3, fontFamily: 'Rubik-Bold', textAlign: 'center'}}>{formatRecentFolderName(name)}</Text>
+          <Text style={{width: 65, paddingTop: 3, fontFamily: 'Rubik-Bold', textAlign: 'center', maxHeight: 30}}>{formatRecentFolderName(name)}</Text>
         </View>
       ) : (
         <View style={{paddingHorizontal: 8, paddingVertical: 3, alignItems: 'center'}}>
           {Icon(65, '#ffffff63') as ReactNode}
-          <Text style={{width: 65, fontFamily: 'Rubik-Bold', textAlign: 'center'}}>{formatRecentFolderName(name)}</Text>
+          <Text style={{width: 65, fontFamily: 'Rubik-Bold', textAlign: 'center', maxHeight: 30}}>{formatRecentFolderName(name)}</Text>
           <Text style={{width: 65, fontFamily: 'Rubik-Regular', textAlign: 'center'}}>{bytes(visibleCacheSize)}</Text>
 
         </View>
