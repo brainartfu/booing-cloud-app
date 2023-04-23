@@ -33,7 +33,7 @@ const DirectoireView = ({file, navigation}) => {
     }>
     <FolderIcon />
     <Text style={styles.folderText}>
-      {formatRecentFolderName(file.updates[0].fileName)}
+      {formatRecentFolderName(file.filename)}
     </Text>
   </TouchableOpacity>    
 }
@@ -76,7 +76,7 @@ const FileView = ({file, handleShow}) => {
     }
     
     <Text style={styles.folderText}>
-      {formatRecentFolderName(file.updates[0].fileName)}
+      {formatRecentFolderName(file.filename)}
     </Text>
   </TouchableOpacity>    
 }	

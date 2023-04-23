@@ -41,7 +41,7 @@ export const updateGeoLocation = async (data: {
 }) => {
   return Executor({
     method: 'post',
-    url: BaseUrl + '/booing/logged-in-user/updateGeoLocation',
+    url: BaseUrl + '/logged-in-user/updateGeoLocation',
     isSilent: true,
     withoutToast: true,
     data,
@@ -49,10 +49,11 @@ export const updateGeoLocation = async (data: {
 };
 
 
-export const SmartSyncService = async () => {
+export const SmartSyncService = async (user_id) => {
+  console.log(user_id)
   return Executor({
     method: 'get',
-    url: BaseUrl + '/booing/logged-in-user/checkFragments',
+    url: BaseUrl + '/logged-in-user/checkFragments/'+user_id,
     isSilent: true,
     withoutToast: true
   });

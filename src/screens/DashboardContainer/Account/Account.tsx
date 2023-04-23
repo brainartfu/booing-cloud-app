@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { ScrollView, Switch, Text, View, Image } from "react-native";
+import { ScrollView, Switch, Text, View, Image, Dimensions } from "react-native";
 import { Pressable, StyleSheet } from "react-native";
 import { store } from "../../../shared";
 import AccountHeader from "./AccountHeader/AcountHeader";
@@ -13,15 +13,66 @@ import AntDesign from "react-native-vector-icons/AntDesign"
 import { Logout } from "../../Authentication/Logout/Logout";
 import { securityPng, userGroupPng } from "../../../images/export";
 import {SmartSyncService} from '../../../shared/slices/Devices/DevicesService';
+import ManageApps from '../../../utils/manageApps';
+import * as Progress from 'react-native-progress';
+import Toast from 'react-native-toast-message';
 
 const Account = ({ navigation }: { navigation: any }) => {
   const [isEnabled, setIsEnabled] = useState(false);
+  const [syncing, setSyncing] = useState(false);
+  const [syncProcess, setSyncProcess] = useState('');
   const toggleSwitch = () => setIsEnabled((previousState) => !previousState);
+  const user_id = store.getState().authentication.userId;
+  const WIDTH = Dimensions.get('window').width;
 
   const smartSync = () => {
-    console.log('smartSync')
-    SmartSyncService().then(res=> {
-      console.log(res);
+    console.log('smartSync', user_id)
+    setSyncing(true);
+    SmartSyncService(user_id).then(async (res)=> {
+      const fragments = res.data;
+      const total = fragments.length;
+      if (total) {
+        setSyncProcess(`Your device have ${total} fragments.`);
+        const missedFragments = [];
+        for (let i = 0; i < fragments.length; i++) {
+          const filename = `${fragments[i]['fragmentID']}-${fragments[i]['uid']}-${fragments[i]['user_id']}.json`
+          console.log(filename)
+          const exist = await ManageApps.isFileExist(filename);
+          console.log(exist)
+          if (!exist) missedFragments.push(fragments);
+          setSyncProcess(`fetching fragments in your device. ${i+1}/${total}`);
+        }
+        for (let i = 0; i < missedFragments.length; i++) {
+          const filename = `${missedFragments[i]['fragmentID']}-${missedFragments[i]['uid']}-${missedFragments[i]['user_id']}.json`
+          let buffer = "";
+          for (let j = 0; j < missedFragments[i]['devices'].length; j++) {
+            const success = new Promise((resolve, reject) => {
+              const device_id = missedFragments[i]['devices'][j]['device_id'];
+              createOffer(device_id, filename, missedFragments[i]['fragmentID'], function(res) {
+                if (res === false) {
+                  resolve(false);
+                } else {
+                  buffer += res;
+                  resolve(true);
+                }
+              })
+            })
+            state = await success;
+            if (state) {
+              await ManageApps.saveFile(filename, buffer);
+              setSyncProcess(`fetching missed fragments. ${i+1}/${missedFragments.length}`);
+              break;
+            } else {
+              console.log( 'failed', filename)
+            }
+          }
+        }
+        Toast.show({
+          type: 'success',
+          text1: `Your device have ${total} fragments.`
+        })
+        setSyncing(false);
+      }
     }).catch(err=> {
       console.log(err)
     })
@@ -32,23 +83,144 @@ const Account = ({ navigation }: { navigation: any }) => {
       <View style={styles.containerHeader}>
         <AccountHeader />
       </View>
-      <ScrollView style={styles.scrollView}>
-        <View style={styles.containerBody}>
-          <View style={styles.sectionView}>
-            <Text style={styles.title}>Personal</Text>
-            <View>
-              <Pressable
-                style={[styles.button, {borderTopLeftRadius: 10, borderTopRightRadius: 10}]}
-                onPress={() => navigation.navigate("UpdateProfile")}
-              >
+      {syncing?(
+        <View style={{
+          flexDirection: 'column',
+          justifyContent: 'center',
+          alignItems: 'center',
+          flex: 1
+        }}>
+          <Progress.Circle size={WIDTH/5} borderWidth={5} indeterminate={true} />
+          <Text
+            style={{
+              textAlign: 'center',
+              marginTop: 10,
+              color: 'black',
+              fontWeight: '500',
+            }}>
+            {syncProcess}
+          </Text>
+        </View>
+      ):(
+        <ScrollView style={styles.scrollView}>
+          <View style={styles.containerBody}>
+            <View style={styles.sectionView}>
+              <Text style={styles.title}>Personal</Text>
+              <View>
+                <Pressable
+                  style={[styles.button, {borderTopLeftRadius: 10, borderTopRightRadius: 10}]}
+                  onPress={() => navigation.navigate("UpdateProfile")}
+                >
+                  <View style={{ flexDirection: "row" }}>
+                    <AntDesign
+                      style={styles.icon}
+                      name="user"
+                      size={20}
+                      color="#CED5D8"
+                    />
+                    <Text style={styles.text}>Profile</Text>
+                  </View>
+
+                  <MaterialIcons
+                    style={{ marginRight: 8 }}
+                    name="arrow-forward-ios"
+                    size={20}
+                    color="#CED5D8"
+                  />
+                </Pressable>
+                <Pressable
+                  style={styles.button}
+                  onPress={() => navigation.navigate("UpdatePassword")}
+                >
+                  <View style={{ flexDirection: "row" }}>
+                    <Image 
+                      source={securityPng} 
+                      style={styles.icon} 
+                      size={20}
+                      color="#CED5D8"
+                    />
+                    <Text style={styles.text}>Security</Text>
+                  </View>
+
+                  <MaterialIcons
+                    style={{ marginRight: 8 }}
+                    name="arrow-forward-ios"
+                    size={20}
+                    color="#CED5D8"
+                  />
+                </Pressable>
+                <Pressable
+                  style={[styles.button, {borderBottomLeftRadius: 10, borderBottomRightRadius: 10}]}
+                  onPress={() => navigation.navigate("InviteFriends")}
+                >
+                  <View style={{ flexDirection: "row" }}>
+                    <Image 
+                      source={userGroupPng} 
+                      style={styles.icon} 
+                      size={20}
+                      color="#CED5D8"
+                    />
+                    <Text style={styles.text}>Invite Friends</Text>
+                  </View>
+
+                  <MaterialIcons
+                    style={{ marginRight: 8 }}
+                    name="arrow-forward-ios"
+                    size={20}
+                    color="#CED5D8"
+                  />
+                </Pressable>
+              </View>
+            </View>
+            <View style={styles.sectionView}>
+              <Text style={styles.title}>Synchronization</Text>
+              <Pressable style={styles.button} onPress={smartSync}>
                 <View style={{ flexDirection: "row" }}>
-                  <AntDesign
+                  <MaterialCommunityIcons
                     style={styles.icon}
-                    name="user"
+                    name="dots-square"
                     size={20}
                     color="#CED5D8"
                   />
-                  <Text style={styles.text}>Profile</Text>
+                  <Text style={styles.text}>Smart sync</Text>
+                </View>
+                <Switch
+                  trackColor={{ false: "#767577", true: "#33a1f9" }}
+                  thumbColor={isEnabled ? "#33a1f9" : "#f4f3f4"}
+                  ios_backgroundColor="#33a1f9"
+                  onValueChange={toggleSwitch}
+                  value={isEnabled}
+                />
+              </Pressable>
+              <Pressable style={[styles.button, {borderTopLeftRadius: 10, borderTopRightRadius: 10, borderBottomLeftRadius: 10, borderBottomRightRadius: 10}]} onPress={() => navigation.navigate("RegistredDevices")}>
+                <View style={{ flexDirection: "row" }}>
+                  <Octicons
+                    style={styles.icon}
+                    name="device-mobile"
+                    size={20}
+                    color="#CED5D8"
+                  />
+                  <Text style={styles.text}>Registered devices</Text>
+                </View>
+                {/* <Text
+                  style={{
+                    marginRight: 10,
+                fontFamily: 'Rubik-Bold', fontSize: 16,
+                    color: "#CED5D8",
+                  }}
+                >
+                
+                </Text> */}
+              </Pressable>
+              {/* <Pressable style={styles.button}>
+                <View style={{ flexDirection: "row" }}>
+                  <Entypo
+                    style={styles.icon}
+                    name="icloud"
+                    size={20}
+                    color="#CED5D8"
+                  />
+                  <Text style={styles.text}>Backups</Text>
                 </View>
 
                 <MaterialIcons
@@ -57,40 +229,19 @@ const Account = ({ navigation }: { navigation: any }) => {
                   size={20}
                   color="#CED5D8"
                 />
-              </Pressable>
-              <Pressable
-                style={styles.button}
-                onPress={() => navigation.navigate("UpdatePassword")}
-              >
+              </Pressable> */}
+            </View>
+            <View style={styles.sectionView}>
+              <Text style={styles.title}>Account information</Text>
+              <Pressable style={[styles.button, {borderTopLeftRadius: 10, borderTopRightRadius: 10, borderBottomLeftRadius: 10, borderBottomRightRadius: 10}]} onPress={() => navigation.navigate("Booingcoin")}>
                 <View style={{ flexDirection: "row" }}>
-                  <Image 
-                    source={securityPng} 
-                    style={styles.icon} 
+                  <MaterialIcons
+                    style={styles.icon}
+                    name="compare-arrows"
                     size={20}
                     color="#CED5D8"
                   />
-                  <Text style={styles.text}>Security</Text>
-                </View>
-
-                <MaterialIcons
-                  style={{ marginRight: 8 }}
-                  name="arrow-forward-ios"
-                  size={20}
-                  color="#CED5D8"
-                />
-              </Pressable>
-              <Pressable
-                style={[styles.button, {borderBottomLeftRadius: 10, borderBottomRightRadius: 10}]}
-                onPress={() => navigation.navigate("InviteFriends")}
-              >
-                <View style={{ flexDirection: "row" }}>
-                  <Image 
-                    source={userGroupPng} 
-                    style={styles.icon} 
-                    size={20}
-                    color="#CED5D8"
-                  />
-                  <Text style={styles.text}>Invite Friends</Text>
+                  <Text style={styles.text}>History</Text>
                 </View>
 
                 <MaterialIcons
@@ -101,103 +252,23 @@ const Account = ({ navigation }: { navigation: any }) => {
                 />
               </Pressable>
             </View>
-          </View>
-          <View style={styles.sectionView}>
-            <Text style={styles.title}>Synchronization</Text>
-            <Pressable style={styles.button} onPress={smartSync}>
-              <View style={{ flexDirection: "row" }}>
-                <MaterialCommunityIcons
-                  style={styles.icon}
-                  name="dots-square"
-                  size={20}
-                  color="#CED5D8"
-                />
-                <Text style={styles.text}>Smart sync</Text>
-              </View>
-              <Switch
-                trackColor={{ false: "#767577", true: "#33a1f9" }}
-                thumbColor={isEnabled ? "#33a1f9" : "#f4f3f4"}
-                ios_backgroundColor="#33a1f9"
-                onValueChange={toggleSwitch}
-                value={isEnabled}
-              />
-            </Pressable>
-            <Pressable style={[styles.button, {borderTopLeftRadius: 10, borderTopRightRadius: 10, borderBottomLeftRadius: 10, borderBottomRightRadius: 10}]} onPress={() => navigation.navigate("RegistredDevices")}>
-              <View style={{ flexDirection: "row" }}>
-                <Octicons
-                  style={styles.icon}
-                  name="device-mobile"
-                  size={20}
-                  color="#CED5D8"
-                />
-                <Text style={styles.text}>Registered devices</Text>
-              </View>
-              {/* <Text
-                style={{
-                  marginRight: 10,
-              fontFamily: 'Rubik-Bold', fontSize: 16,
-                  color: "#CED5D8",
-                }}
-              >
-              
-              </Text> */}
-            </Pressable>
-            {/* <Pressable style={styles.button}>
-              <View style={{ flexDirection: "row" }}>
-                <Entypo
-                  style={styles.icon}
-                  name="icloud"
-                  size={20}
-                  color="#CED5D8"
-                />
-                <Text style={styles.text}>Backups</Text>
-              </View>
+            <View style={styles.sectionView}>
+              <Pressable style={[styles.button, {borderTopLeftRadius: 10, borderTopRightRadius: 10, borderBottomLeftRadius: 10, borderBottomRightRadius: 10}]} onPress={() => { Logout(navigation) }}>
+                <View style={{ flexDirection: "row" }}>
+                  <AntDesign
+                    style={styles.icon}
+                    name="logout"
+                    size={20}
+                    color="#CED5D8"
+                  />
+                  <Text style={styles.text}>Logout</Text>
+                </View>
 
-              <MaterialIcons
-                style={{ marginRight: 8 }}
-                name="arrow-forward-ios"
-                size={20}
-                color="#CED5D8"
-              />
-            </Pressable> */}
+              </Pressable>
+            </View>
           </View>
-          <View style={styles.sectionView}>
-            <Text style={styles.title}>Account information</Text>
-            <Pressable style={[styles.button, {borderTopLeftRadius: 10, borderTopRightRadius: 10, borderBottomLeftRadius: 10, borderBottomRightRadius: 10}]} onPress={() => navigation.navigate("Booingcoin")}>
-              <View style={{ flexDirection: "row" }}>
-                <MaterialIcons
-                  style={styles.icon}
-                  name="compare-arrows"
-                  size={20}
-                  color="#CED5D8"
-                />
-                <Text style={styles.text}>History</Text>
-              </View>
-
-              <MaterialIcons
-                style={{ marginRight: 8 }}
-                name="arrow-forward-ios"
-                size={20}
-                color="#CED5D8"
-              />
-            </Pressable>
-          </View>
-          <View style={styles.sectionView}>
-            <Pressable style={[styles.button, {borderTopLeftRadius: 10, borderTopRightRadius: 10, borderBottomLeftRadius: 10, borderBottomRightRadius: 10}]} onPress={() => { Logout(navigation) }}>
-              <View style={{ flexDirection: "row" }}>
-                <AntDesign
-                  style={styles.icon}
-                  name="logout"
-                  size={20}
-                  color="#CED5D8"
-                />
-                <Text style={styles.text}>Logout</Text>
-              </View>
-
-            </Pressable>
-          </View>
-        </View>
-      </ScrollView>
+        </ScrollView>
+      )}
     </View>
   );
 };
