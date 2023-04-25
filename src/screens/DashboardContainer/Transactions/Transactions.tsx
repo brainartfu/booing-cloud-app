@@ -475,9 +475,19 @@ const Transactions = ({navigation}: any) => {
                   <Text style={[styles.normaltext, styles.textRight, {textAlign: 'center', fontFamily: 'Rubik-Regular', fontSize: 20}]}>{viewTransaction.title}</Text>
                 </View>
                 <View style={{flexDirection: "row", marginTop: 4}}>
+                  <Text style={[styles.normaltext, styles.textLeft]}>Tx_id: </Text>
+                  <Text style={styles.normaltext, styles.textRight}> tx_{viewTransaction._id}</Text>
+                </View>
+                <View style={{flexDirection: "row", marginTop: 4}}>
                   <Text style={[styles.normaltext, styles.textLeft]}>Amount: </Text>
                   <Text style={styles.normaltext, styles.textRight}> {coinWithComma(viewTransaction.amount)} BOO</Text>
                 </View>
+                {(viewTransaction.quantity) && 
+                  <View style={{flexDirection: "row", marginTop: 4}}>
+                    <Text style={[styles.normaltext, styles.textLeft]}>Space : </Text>
+                    <Text style={styles.normaltext, styles.textRight}> {coinWithComma(viewTransaction.quantity)} GB</Text>
+                  </View>
+                }
                 {(viewTransaction.status !== 0 && viewTransaction.status !== 4) && 
                   <>
                     <View style={{flexDirection: "row", marginTop: 4}}>

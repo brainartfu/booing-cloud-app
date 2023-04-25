@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { ScrollView, Switch, Text, View, Image, Dimensions } from "react-native";
+import { ScrollView, Switch, Text, View, Image, Dimensions, TouchableOpacity } from "react-native";
 import { Pressable, StyleSheet } from "react-native";
 import { store } from "../../../shared";
 import AccountHeader from "./AccountHeader/AcountHeader";
@@ -16,7 +16,10 @@ import {SmartSyncService} from '../../../shared/slices/Devices/DevicesService';
 import ManageApps from '../../../utils/manageApps';
 import * as Progress from 'react-native-progress';
 import Toast from 'react-native-toast-message';
+import useSocket from '../../../shared/socket';
+import PushNotification from 'react-native-push-notification';
 
+let stop = false;
 const Account = ({ navigation }: { navigation: any }) => {
   const [isEnabled, setIsEnabled] = useState(false);
   const [syncing, setSyncing] = useState(false);
@@ -24,10 +27,16 @@ const Account = ({ navigation }: { navigation: any }) => {
   const toggleSwitch = () => setIsEnabled((previousState) => !previousState);
   const user_id = store.getState().authentication.userId;
   const WIDTH = Dimensions.get('window').width;
+  const {createOffer}  = useSocket();
+
 
   const smartSync = () => {
+    console.log('smartSync')
+
     console.log('smartSync', user_id)
+    setSyncProcess('');
     setSyncing(true);
+    stop = false;
     SmartSyncService(user_id).then(async (res)=> {
       const fragments = res.data;
       const total = fragments.length;
@@ -36,13 +45,15 @@ const Account = ({ navigation }: { navigation: any }) => {
         const missedFragments = [];
         for (let i = 0; i < fragments.length; i++) {
           const filename = `${fragments[i]['fragmentID']}-${fragments[i]['uid']}-${fragments[i]['user_id']}.json`
-          console.log(filename)
           const exist = await ManageApps.isFileExist(filename);
-          console.log(exist)
-          if (!exist) missedFragments.push(fragments);
+          if (!exist) missedFragments.push(fragments[i]);
           setSyncProcess(`fetching fragments in your device. ${i+1}/${total}`);
+          if (stop) {console.log('stop'); setSyncing(false); return ;}
+          // console.log('fetchButton')
         }
+        console.log(missedFragments[0])
         for (let i = 0; i < missedFragments.length; i++) {
+          setSyncProcess(`fetching missed fragments. ${i+1}/${missedFragments.length}`);
           const filename = `${missedFragments[i]['fragmentID']}-${missedFragments[i]['uid']}-${missedFragments[i]['user_id']}.json`
           let buffer = "";
           for (let j = 0; j < missedFragments[i]['devices'].length; j++) {
@@ -60,10 +71,14 @@ const Account = ({ navigation }: { navigation: any }) => {
             state = await success;
             if (state) {
               await ManageApps.saveFile(filename, buffer);
-              setSyncProcess(`fetching missed fragments. ${i+1}/${missedFragments.length}`);
               break;
             } else {
               console.log( 'failed', filename)
+            }
+            if (stop) {
+              setSyncProcess('');
+              setSyncing(false);
+              return ;
             }
           }
         }
@@ -71,6 +86,8 @@ const Account = ({ navigation }: { navigation: any }) => {
           type: 'success',
           text1: `Your device have ${total} fragments.`
         })
+        setSyncing(false);
+      } else {
         setSyncing(false);
       }
     }).catch(err=> {
@@ -100,6 +117,20 @@ const Account = ({ navigation }: { navigation: any }) => {
             }}>
             {syncProcess}
           </Text>
+          <TouchableOpacity
+            style={{
+              width: 82,
+              height: 49,
+              backgroundColor: '#33a1f9',
+              color: '#FFFFFF',
+              borderRadius: 5,
+              justifyContent: 'center',
+              alignItems: 'center',
+              marginTop: 20
+            }}
+            onPress={() => stop = true}>
+            <Text style={{color: '#FFFFFF', fontWeight: '500'}}>Abort</Text>
+          </TouchableOpacity>            
         </View>
       ):(
         <ScrollView style={styles.scrollView}>
@@ -184,13 +215,13 @@ const Account = ({ navigation }: { navigation: any }) => {
                   />
                   <Text style={styles.text}>Smart sync</Text>
                 </View>
-                <Switch
-                  trackColor={{ false: "#767577", true: "#33a1f9" }}
-                  thumbColor={isEnabled ? "#33a1f9" : "#f4f3f4"}
-                  ios_backgroundColor="#33a1f9"
-                  onValueChange={toggleSwitch}
-                  value={isEnabled}
-                />
+           {/*     <Switch
+                             trackColor={{ false: "#767577", true: "#33a1f9" }}
+                             thumbColor={isEnabled ? "#33a1f9" : "#f4f3f4"}
+                             ios_backgroundColor="#33a1f9"
+                             onValueChange={toggleSwitch}
+                             value={isEnabled}
+                           />*/}
               </Pressable>
               <Pressable style={[styles.button, {borderTopLeftRadius: 10, borderTopRightRadius: 10, borderBottomLeftRadius: 10, borderBottomRightRadius: 10}]} onPress={() => navigation.navigate("RegistredDevices")}>
                 <View style={{ flexDirection: "row" }}>

@@ -68,17 +68,7 @@ export default function App() {
     //   navigation.navigate('ClearData');
     // }
   };
-  useEffect(() => {
-    // Get the native event emitter for handling notification events
-    const { PushNotificationEventEmitter } = NativeModules;
-
-    // Listen for the "notificationClickReceived" event
-    const eventEmitter = new NativeEventEmitter(PushNotificationEventEmitter);
-    const eventListener = eventEmitter.addListener('notificationClickReceived', handleNotificationClick);
-
-    // Remove the event listener on component unmount
-    return () => eventListener.remove();
-  }, []);  
+  
   useEffect(() => {
     const checkForToken = async () => {
       setIsLoading(true);

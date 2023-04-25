@@ -151,7 +151,7 @@ const styles = StyleSheet.create({
   image: {
     alignItems: 'center',
     justifyContent: 'center',
-    width: '90%',
+    // width: '90%',
     resizeMode: "contain"
   },
   button: {

@@ -16,6 +16,7 @@ import Buffer from 'buffer';
 import mime from 'mime-types';
 import {types} from '../../../../shared';
 import {useSelector} from 'react-redux';
+import PushNotification from 'react-native-push-notification';
 
 const calcSpace = (arr: {size: number}[], field = 'size', minVal = 0) =>
   arr.reduce((acc, elem) => acc + (elem as any)[field], 0) > minVal
@@ -28,7 +29,7 @@ const addId = (arr: []) => {
 };    
 
 function ClearData({route, navigation}: {navigation: any; route: any}) {
-  const {freeDiskStorage} = route.params;
+  const {freeDiskStorage, notification} = route.params;
   const [showData, setShowData] = useState(false);
   const [showModal, setShowModal] = useState<{show: boolean; loading: boolean}>(
     {show: true, loading: false},
@@ -73,17 +74,24 @@ function ClearData({route, navigation}: {navigation: any; route: any}) {
     return arr;
   };
 
-  const showMessage = ({text, progress}) => {
+  const showMessage = ({text, progress, sound=false}) => {
     console.log(text, progress)
-    if (isFocused) {
-      setProgressProps({text: text, progress: progress});
-    } 
-    ManageApps.showNotification(
-      "Hey, I'm optimizing your device's space.",
-      `${text}    ${progress*100}%`,
-      100, progress*100, // progress bar
-      true               // set silent
-    );
+    if (!notification) {
+      if (isFocused) {
+        setProgressProps({text: text, progress: progress});
+      } 
+      PushNotification.localNotification({
+        id: '123',
+        channelId: 'booing-channel', // channel id (Android only)
+        title: "Hey, I'm optimizing your device's space.", // notification title
+        message: `${text}`, // notification message
+        playsound: sound,
+        smallIcon: 'src_images_small_logo',
+        vibrate: true, // enable vibration (Android only)
+        vibration: 300, // vibration duration (Android only)
+        userInfo: {navigate: 'ClearData'}, // additional data to send with the notification
+      });    
+    }
   }
   const fetchFiles = useCallback(async (filePath) => {
     // const delaytime = await delay(1500); 
@@ -150,7 +158,7 @@ function ClearData({route, navigation}: {navigation: any; route: any}) {
     const duplicateArr = {document: [], apk: [], video: [], audio: [], image: [], download: []};
     for (let type in categoriedFiles) {
       const arr = [];
-      showMessage({text: `find duplicated ${type}s`, progress: 0.8})
+      showMessage({text: `find duplicated ${type}s`})
       categoriedFiles[type].forEach((obj) => {
         if (arr.hasOwnProperty(obj.hash)) {
           arr[obj.hash].push(obj);
@@ -168,10 +176,6 @@ function ClearData({route, navigation}: {navigation: any; route: any}) {
     setDuplicate(duplicateArr)
   }, [isFocused, media])
   const scanUserStorage = useCallback(async () => {
-    // setTimeout(() => {
-    //   setShowModal({show: false, loading: false});
-    // }, 200);
-    // setShowData(true);    
     try {
       setClearManually(false);
       setRescanOnFocus(false);
@@ -184,21 +188,7 @@ function ClearData({route, navigation}: {navigation: any; route: any}) {
       store.dispatch(setFilesList(files));
 
       await separateByCategory(files)
-      // store.dispatch(setRootLoading(false));
-      // setShowModal({show: true, loading: true});
-      // // setApps(addId(await ManageApps.getAllInstalledApps()));
-      // showMessage({text: 'fetching images ...', progress: 0});
-      // const allImages = addId(await ManageApps.getImages());
-      // showMessage({text: 'fetching videos ...', progress: 0.15});
-      // const allVideos = addId(await ManageApps.getVideos());
-      // showMessage({text: 'fetching audio files ...', progress: 0.3});
-      // const allAudios = addId(await ManageApps.getAudios());
-      // await findDuplicateFiles({images: allImages, videos: allVideos, audios: allAudios});
-      // showMessage({text: 'find all apks ...', progress: 0.85});
-      // setMedia({images: allImages, videos: allVideos, audios: allAudios});
-      // showMessage({text: 'done !', progress: 1});
-      // setApps(addId(await ManageApps.getAllApks()))
-      // const delaytime = await delay(1000);
+    
     } catch (e: any) {
       console.log(e.stack);
     } finally {
@@ -206,53 +196,24 @@ function ClearData({route, navigation}: {navigation: any; route: any}) {
         setShowModal({show: false, loading: false});
       }, 200);
       setShowData(true);
-      ManageApps.showNotification(
-        'Scan Completed',
-        'you can find all your junk files in the scan page',
-        0, 0,  // remove progress bar
-        false  // sound ring
-      );
+      PushNotification.localNotification({
+        id: '123',
+        channelId: 'booing-channel', // channel id (Android only)
+        title: 'Scan Completed', // notification title
+        message: 'you can find all your junk files in the scan page', // notification message
+        playsound: true,
+        smallIcon: 'src_images_small_logo',
+        vibrate: true, // enable vibration (Android only)
+        vibration: 300, // vibration duration (Android only)
+        onlyAlertOnce: true,
+        userInfo: {navigate: 'ClearData'}, // additional data to send with the notification
+      });    
     }
   }, [isFocused, refresh]);
 
   const removeDeletedItems = (ids: string[], label: string) => {
     console.log('removeDeletedItems', ids, label)
-    // const removeItems = (setFn: Function) => {
-    //   setFn((arr: []) => arr.filter((item: any) => !ids.includes(item.id)));
-    // };
-    // switch (label) {
-    //   case 'Pictures':
-    //     removeItems(setImages);
-    //     analyseStorage();
-    //     break;
-    //   case 'Videos':
-    //     removeItems(setVideos);
-    //     analyseStorage();
-    //     break;
-    //   case 'Music':
-    //     removeItems(setMusic);
-    //     analyseStorage();
-    //     break;
-    //   // case 'Cache':
-    //   //   removeItems(setApps);
-    //   //   break;
-    //   case 'Thumbnails':
-    //     removeItems(setThumbnails);
-    //     break;
-    //   case 'Empty folders':
-    //     removeItems(setEmptyFolders);
-    //     break;
-    //   case 'Not installed apks':
-    //     removeItems(setNotInstalledApks);
-    //     break;
-    //   default:
-    //     break;
-    // }
   };
-
-  // useEffect(() => {
-  //   console.log(lastFetchTime, filesList)
-  // }, [lastFetchTime, filesList])
 
   const refechByLabel = async (ids: string[], type: string) => {
     console.log('refechByLabel', ids, type)
@@ -308,8 +269,16 @@ function ClearData({route, navigation}: {navigation: any; route: any}) {
       console.log('cache size',  Math.ceil((cacheSize / Math.pow(1024, 2))*100)/100)
       setTotalCacheSize(Math.ceil((cacheSize / Math.pow(1024, 2))*100)/100);    
     })();
-
-    if (!showData) {
+    if (!showData && notification) {
+      (async () => {
+        setShowModal({show: true, loading: true});
+        await separateByCategory(filesList, false)
+        setTimeout(() => {
+          setShowModal({show: false, loading: false});
+        }, 200);
+        setShowData(true);
+      })();
+    } else if (!showData) {
       if (isFocused && showModal.loading === false && showModal.show === false) {
         if (rescanOnFocuse) {
           setShowData(false);
@@ -331,9 +300,7 @@ function ClearData({route, navigation}: {navigation: any; route: any}) {
       setShowModal({show: false, loading: false});
     }
   }, [isFocused, rescanOnFocuse]);
-  useEffect(() => {
-    console.log(categoryView)
-  }, [categoryView])
+
   return (
     <View style={styles.container}>
       <CleanModal 

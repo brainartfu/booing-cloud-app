@@ -5,7 +5,6 @@ import LinearGradient from 'react-native-linear-gradient';
 import {small_logo} from '../../../../../images/export';
 
 export const ClearDataHeader = ({freeDiskStorage, navigation} : {navigation: any, route: any}) => {
-	console.log('render header')
 	return (
 	    <LinearGradient
 	      start={{x: 0, y: 0}}

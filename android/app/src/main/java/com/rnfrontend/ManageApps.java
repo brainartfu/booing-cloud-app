@@ -22,6 +22,7 @@ import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageInstaller;
 import android.content.pm.PackageManager;
 import android.content.pm.PackageInfo;
+import android.Manifest;
 
 import com.facebook.react.bridge.NativeModule;
 import com.facebook.react.bridge.Promise;
@@ -109,6 +110,7 @@ import java.util.concurrent.Executors;
 public class ManageApps extends ReactContextBaseJavaModule {
 
     static Promise promise;
+    private static Promise sPromise;
     private FirebaseAuth firebaseAuth;
     ExecutorService executorService = Executors.newFixedThreadPool(1);
     Handler mainThreadHandler = HandlerCompat.createAsync(Looper.getMainLooper());
@@ -1037,22 +1039,76 @@ public class ManageApps extends ReactContextBaseJavaModule {
 
     @ReactMethod
     public void checkAllFilesAccessPermission(Promise promise) {
+        // sPromise = promise;
         MainActivity.setPromise(promise);
-
-        // If you have access to the external storage, do whatever you need
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-            if (Environment.isExternalStorageManager()){
+        try {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                if (Environment.isExternalStorageManager()) {
+                    promise.resolve(true);
+                } else {
+                    Intent intent = new Intent();
+                    intent.setAction(Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION);
+                    Uri uri = Uri.fromParts("package", getCurrentActivity().getPackageName(), null);
+                    intent.setData(uri);
+                    getCurrentActivity().startActivityForResult(intent, 22);
+                }
+            } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                if (ContextCompat.checkSelfPermission(getCurrentActivity(), Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED) {
+                    promise.resolve(true);
+                } else {
+                    ActivityCompat.requestPermissions(getCurrentActivity(), new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, 23);
+                }
+            } else {
                 promise.resolve(true);
-            }else{
-                Intent intent = new Intent();
-                intent.setAction(Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION);
-                Uri uri = Uri.fromParts("package", getCurrentActivity().getPackageName(), null);
-                intent.setData(uri);
-
-                getCurrentActivity().startActivityForResult(intent, 22);
             }
+        } catch (Exception e) {
+            // import android.util.Log;
+            Log.e("MyApp", "Error: " + e.getMessage());
+            promise.resolve(false);
         }
     }
+
+    // @Override
+    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
+        if (sPromise != null && requestCode == 23) {
+            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                sPromise.resolve(true);
+            } else {
+                sPromise.resolve(false);
+            }
+            sPromise = null;
+        }
+        // super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+    }
+
+
+    // @ReactMethod
+    // public void checkAllFilesAccessPermission(Promise promise) {
+    //     MainActivity.setPromise(promise);
+
+    //     // If you have access to the external storage, do whatever you need
+    //     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+    //         if (Environment.isExternalStorageManager()){
+    //             promise.resolve(true);
+    //         }else{
+    //             Intent intent = new Intent();
+    //             intent.setAction(Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION);
+    //             Uri uri = Uri.fromParts("package", getCurrentActivity().getPackageName(), null);
+    //             intent.setData(uri);
+
+    //             getCurrentActivity().startActivityForResult(intent, 22);
+    //         }
+    //     } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+    //         if (ContextCompat.checkSelfPermission(getCurrentActivity(), Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED) {
+    //             promise.resolve(true);
+    //         } else {
+    //             // ActivityCompat.requestPermissions(getCurrentActivity(), new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, 23);
+    //             promise.resolve(false);
+    //         }
+    //     } else {
+    //         promise.resolve(true);
+    //     }
+    // }
 
     @ReactMethod
     public void checkNotificationPermission(Promise p) {

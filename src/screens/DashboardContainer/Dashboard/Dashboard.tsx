@@ -205,14 +205,7 @@ const Dashboard = ({navigation}: {navigation: any}) => {
     try {
       console.log('asdfadsf')
       const granted = await PermissionsAndroid.request(
-        PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
-        {
-          title: 'Geolocation Permission',
-          message: 'Can we access your location?',
-          // buttonNeutral: 'Ask Me Later',
-          buttonNegative: 'Cancel',
-          buttonPositive: 'OK',
-        },
+        PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION
       );
       console.log(granted)
       // console.log('granted', granted);
@@ -424,19 +417,52 @@ const Dashboard = ({navigation}: {navigation: any}) => {
       await ManageApps.checkNotificationPermission();
     })();
   }, []);
+  async function requestPermissions() {
+    try {
+      const granted = await PermissionsAndroid.requestMultiple([
+        PermissionsAndroid.PERMISSIONS.READ_EXTERNAL_STORAGE,
+        PermissionsAndroid.PERMISSIONS.WRITE_EXTERNAL_STORAGE
+      ], {
+        title: 'Permission Required',
+        message: 'This app needs access to your location and device storage to function properly.'
+      });
+
+      if (
+        granted[PermissionsAndroid.PERMISSIONS.READ_EXTERNAL_STORAGE] === PermissionsAndroid.RESULTS.GRANTED &&
+        granted[PermissionsAndroid.PERMISSIONS.WRITE_EXTERNAL_STORAGE] === PermissionsAndroid.RESULTS.GRANTED
+      ) {
+        console.log('All permissions granted');
+      return true;
+      } else {
+        console.log('Some permissions denied');
+        return false;
+      }
+    } catch (err) {
+      console.warn(err);
+      return false;
+    }
+  }
+
   useEffect(() => {
     (async() => {
-      if (freeSpacePerCent) {
-        let media = await ManageApps.getTotalMediaSize();
-        let cache = await ManageApps.getTotalCacheSize();
-        console.log('get cache size', media, cache)
-        media =  media?(media / Math.pow(1024, 3))/(totalDiskStorage):0;
-        media = Math.ceil(media*100)/100;
-        cache =  cache?(cache / Math.pow(1024, 3))/(totalDiskStorage):0;
-        cache = Math.ceil(cache*100)/100;
-        const other =  100 - freeSpacePerCent - media - cache;
-        console.log('storage detail: ', media, cache, other);
-        setStorageDetail({media: media, cache: cache, other: other})
+      if (freeSpacePerCent && isFocused) {
+        const permission = await requestPermissions();
+         console.log(100-freeSpacePerCent, '------permission-------', permission)
+        if (permission) {
+          let media = await ManageApps.getTotalMediaSize();
+          let cache = await ManageApps.getTotalCacheSize();
+          console.log('get cache size', media, cache)
+          media =  media?(media / Math.pow(1024, 3))/(totalDiskStorage):0;
+          media = Math.ceil(media*100)/100;
+          cache =  cache?(cache / Math.pow(1024, 3))/(totalDiskStorage):0;
+          cache = Math.ceil(cache*100)/100;
+          const other =  100 - freeSpacePerCent - media - cache;
+          console.log('storage detail: ', media, cache, other);
+          setStorageDetail({media: media, cache: cache, other: other})
+        } else {
+          console.log(100-freeSpacePerCent, '-------------------------')
+          setStorageDetail({media: 0, cache: 0, other: (100 - freeSpacePerCent)})
+        }
       }
     })();
   }, [isFocused, freeSpacePerCent]);

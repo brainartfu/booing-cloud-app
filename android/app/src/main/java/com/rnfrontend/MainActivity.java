@@ -17,7 +17,6 @@ import com.facebook.react.bridge.Promise;
 import com.facebook.react.bridge.WritableArray;
 import com.facebook.react.bridge.WritableNativeArray;
 
-import com.wix.reactnativenotifications.RNNotificationsPackage;
 
 public class MainActivity extends ReactActivity {
   public static Promise promise;

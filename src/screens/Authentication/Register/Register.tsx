@@ -483,7 +483,6 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   containerImage: {
-    backgroundColor: '#33a1f9',
     width: '100%',
     alignItems: 'center',
     justifyContent: 'center',
@@ -492,7 +491,7 @@ const styles = StyleSheet.create({
   image: {
     alignItems: 'center',
     justifyContent: 'center',
-    width: '90%',
+    // width: '90%',
     resizeMode: "contain"    
   },
   button: {

@@ -273,7 +273,6 @@ dependencies {
     implementation 'com.google.firebase:firebase-dynamic-links-ktx'
     implementation 'com.google.firebase:firebase-analytics-ktx'    
     
-
     //noinspection GradleDynamicVersion
     implementation 'com.facebook.react:react-native:+'  // From node_modules
 
@@ -304,7 +303,7 @@ dependencies {
         implementation jscFlavor
     }
     implementation project(':react-native-fs')
-    implementation project(':react-native-notifications')
+    implementation project(':react-native-push-notification')
     // implementation project(':react-native-paypal')
 }
 
