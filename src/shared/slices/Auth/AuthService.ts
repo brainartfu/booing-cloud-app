@@ -52,7 +52,7 @@ export const updateProfile = (data: any) => {
     data,
     successFun(data) {
       console.log(data.data);
-      saveUserData(data.data.user);
+      saveUserData(data);
       // saveToken(data);
     },
   });

@@ -173,7 +173,7 @@ const SocialMediaAuth = ({navigation}: {navigation: any}) => {
     <View style={styles.container}>
       <Dialog isVisible={loginWithTwitterDialog.show}>
         <Dialog.Title
-          title="please enter your email to continue logging with twitter"
+          title="Please enter your email to continue logging with twitter"
           titleStyle={{color: 'black'}}
         />
         <TextInput
@@ -187,6 +187,7 @@ const SocialMediaAuth = ({navigation}: {navigation: any}) => {
             borderRadius: 8,
             marginBottom: '5.18%',
             marginTop: 4,
+            color: "black"
           }}
           placeholderTextColor="#716D6D"
         />

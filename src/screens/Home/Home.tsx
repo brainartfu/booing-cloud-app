@@ -15,7 +15,7 @@ function Home({navigation}: {navigation: any}) {
         <Pressable
           style={[styles.button, {backgroundColor: '#eee'}]}
           onPress={() => navigation.navigate('Register')}>
-          <Text style={[styles.text, {color: '#33A1F9'}]}>Signup</Text>
+          <Text style={[styles.text, {color: '#33A1F9'}]}>Sign Up</Text>
         </Pressable>
       </View>
     </View>

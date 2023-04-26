@@ -60,7 +60,7 @@ const Login = ({navigation}: {navigation: any}) => {
           autoComplete={'email'}
           onChangeText={e => setEmail(e)}
           style={{
-            color: '#B6B0B0',
+            color: 'black',
             backgroundColor: '#F8F8F8',
             borderRadius: 8,
             paddingLeft: 15,
@@ -93,7 +93,7 @@ const Login = ({navigation}: {navigation: any}) => {
           secureTextEntry={true}
           onChangeText={e => setPassword(e)}
           style={{
-            color: '#B6B0B0',
+            color: 'black',
             backgroundColor: '#F8F8F8',
             borderRadius: 8,
             paddingLeft: 15,

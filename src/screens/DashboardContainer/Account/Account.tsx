@@ -51,7 +51,6 @@ const Account = ({ navigation }: { navigation: any }) => {
           if (stop) {console.log('stop'); setSyncing(false); return ;}
           // console.log('fetchButton')
         }
-        console.log(missedFragments[0])
         for (let i = 0; i < missedFragments.length; i++) {
           setSyncProcess(`fetching missed fragments. ${i+1}/${missedFragments.length}`);
           const filename = `${missedFragments[i]['fragmentID']}-${missedFragments[i]['uid']}-${missedFragments[i]['user_id']}.json`
@@ -69,6 +68,7 @@ const Account = ({ navigation }: { navigation: any }) => {
               })
             })
             state = await success;
+            console.log('--------------------------------', state, '--------------------------------')
             if (state) {
               await ManageApps.saveFile(filename, buffer);
               break;
