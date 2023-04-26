@@ -207,7 +207,7 @@ const RecycleBin = ({navigation}: any) => {
         store.dispatch(setRootLoading(false));
         return Toast.show({
           type: 'error',
-          text1: 'cannot create folder, you are not logged in !',
+          text1: 'cannot delete file, you are not logged in !',
         });
       }
       const response = await axios({

@@ -128,11 +128,7 @@ const Dashboard = ({navigation}: {navigation: any}) => {
       available: 1,
       usedPerGiga: 0
   })
-  // const [usedStorage, setUsedStorage] = useState<number>(0);
-  // const [availabledStorage, setAvailableStorage] = useState<number>(1);
-  // const [usedStoragePerGiga, setUsedStoragePerGiga] = useState<number>(0);
-
-  // const [position, setPosition] = useState<{lat: number; lon: number}>();
+  
   const [recentFiles, setRecentFiles] = useState<
     {name: string; id: string}[]
   >([]);
@@ -183,65 +179,37 @@ const Dashboard = ({navigation}: {navigation: any}) => {
         await getWallet({user_id}).then(res => {
           if (res.success) setWalletAmount(res.data?.amount);
         });
-        // await getRecentFiles({user_id: user_id})
-        //   .then(response => {
-        //     if (response.success) {
-        //       setRecentFiles(response.data);
-        //     }
-        //   })
-        //   .catch(e => {
-        //     if (e.name === AXIOS_ERROR && !e.message.includes('code 500')) {
-        //       return Toast.show({
-        //         type: 'error',
-        //         text1: e.response?.data?.message,
-        //       });
-        //     }
-        //   });
+        await getRecentFiles({user_id: user_id})
+          .then(response => {
+            if (response.success) {
+              setRecentFiles(response.data);
+            }
+          })
+          .catch(e => {
+            if (e.name === AXIOS_ERROR && !e.message.includes('code 500')) {
+              return Toast.show({
+                type: 'error',
+                text1: e.response?.data?.message,
+              });
+            }
+          });
       })();
     }
   }, [user_id, isFocused]);
 
   const requestLocationPermission = async () => {
     try {
-      console.log('asdfadsf')
       const granted = await PermissionsAndroid.request(
         PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION
       );
-      console.log(granted)
-      // console.log('granted', granted);
       if (granted === 'granted') {
-        // console.log('You can use Geolocation');
         return true;
       } else {
-        // console.log('You cannot use Geolocation');
         return false;
       }
     } catch (err) {
       return false;
     }
-  };
-
-  const getLocation = () => {
-    const result = requestLocationPermission();
-    result.then(res => {
-      // console.log('res is:', res);
-      if (res) {
-        Geolocation.getCurrentPosition(
-          position => {
-            // console.log(position);
-            // setPosition({
-            //   lat: position.coords.latitude,
-            //   lon: position.coords.longitude,
-            // });
-          },
-          error => {
-            // See error code charts below.
-            // console.log(error.code, error.message);
-          },
-          {enableHighAccuracy: true, timeout: 15000, maximumAge: 10000},
-        );
-      }
-    });
   };
 
   const getUserData = () => {
@@ -255,15 +223,12 @@ const Dashboard = ({navigation}: {navigation: any}) => {
 
   useEffect(() => {
     try {
-      // getLocation();
       getUserData();
     } catch (error) {
       console.log(error);
     }
 
     let totalStorage = 0;
-    // let isEmulator = DeviceInfo.isEmulator();
-    // if (!isEmulator) {
     DeviceInfo.getTotalDiskCapacity().then(capacity => {
       totalStorage = capacity;
       setTotalDiskStorage(Number((capacity / Math.pow(1024, 3)).toFixed(2)));
@@ -303,16 +268,6 @@ const Dashboard = ({navigation}: {navigation: any}) => {
           if (res) {
             Geolocation.getCurrentPosition(
               position => {
-                
-
-                console.log({
-                  user_id: userData?._id,
-                  device_ref: deviceId,
-                  lat: position.coords.latitude,
-                  lon: position.coords.longitude,
-                  name: deviceName,
-                  type: system,
-                });
 
                 addNewDevice({
                   user_id: userData?._id,
@@ -342,17 +297,6 @@ const Dashboard = ({navigation}: {navigation: any}) => {
         });
       });
     });
-    (async () => {
-      // const totalMediaSize = await ManageApps.getTotalMediaSize();
-      // console.log(totalMediaSize)
-      // const totalCacheSize = await ManageApps.getTotalCacheSize();
-      // console.log(totalCacheSize);
-      // store.dispatch(setStorage({media: totalMediaSize, cache: totalCacheSize}));
-      // setStorage({media: totalMediaSize, cache: totalCacheSize})  
-    })()  
-    // ManageApps.getTotalMediaSize().then((totalCacheSize) => {
-    //   console.log(totalCacheSize)
-    // })
   }, []);
 
   const getUserUsedStorage = async () => {
@@ -424,7 +368,7 @@ const Dashboard = ({navigation}: {navigation: any}) => {
         PermissionsAndroid.PERMISSIONS.WRITE_EXTERNAL_STORAGE
       ], {
         title: 'Permission Required',
-        message: 'This app needs access to your location and device storage to function properly.'
+        message: 'This app needs access to device storage to function properly.'
       });
 
       if (
@@ -447,7 +391,6 @@ const Dashboard = ({navigation}: {navigation: any}) => {
     (async() => {
       if (freeSpacePerCent && isFocused) {
         const permission = await requestPermissions();
-         console.log(100-freeSpacePerCent, '------permission-------', permission)
         if (permission) {
           let media = await ManageApps.getTotalMediaSize();
           let cache = await ManageApps.getTotalCacheSize();
@@ -457,10 +400,8 @@ const Dashboard = ({navigation}: {navigation: any}) => {
           cache =  cache?(cache / Math.pow(1024, 3))/(totalDiskStorage):0;
           cache = Math.ceil(cache*100)/100;
           const other =  100 - freeSpacePerCent - media - cache;
-          console.log('storage detail: ', media, cache, other);
           setStorageDetail({media: media, cache: cache, other: other})
         } else {
-          console.log(100-freeSpacePerCent, '-------------------------')
           setStorageDetail({media: 0, cache: 0, other: (100 - freeSpacePerCent)})
         }
       }

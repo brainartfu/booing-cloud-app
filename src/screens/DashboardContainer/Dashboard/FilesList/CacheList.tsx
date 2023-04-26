@@ -228,9 +228,7 @@ export default function CacheList({
                   {label}
                 </Text>
               </View>
-              {/* {viewedItems.filter(item => !item.isLoaded).length !== 0 && (
-                <Circle size={16} indeterminate={true} />
-              )} */}
+
             </View>
             <Pressable
               style={{

@@ -76,6 +76,17 @@ function Register({navigation}: {navigation: any}) {
         return showErrorMessage({title: "Invalid email address.", text: "Please double-check your email address."})
       }    
     }
+    console.log(formRegister.phone)
+    if (formRegister.phone) {
+      const pattern = /^\d{10}$/; // matches a 10-digit number
+
+      const matchResult = formRegister.phone.match(pattern);
+
+      if (!matchResult) {
+        console.log("Invalid phone number");
+        return showErrorMessage({title: "Invalid phone number.", text: "Please enter a valid 10-digit phone number."})
+      }
+    }
     let message = '';
     if (!formRegister.email) message += "Email field is required. \n";
     if (!formRegister.name) message += "Name field is required. \n";
@@ -389,7 +400,9 @@ function Register({navigation}: {navigation: any}) {
           <TextInput
             placeholder="Enter Phone Number"
             autoComplete={'tel'}
-            onChangeText={e => setFormRegister({...formRegister, phone: e})}
+            keyboardType={'numeric'}
+            value={formRegister.phone}
+            onChangeText={e => {console.log(e, e.replace(/[^0-9]/g, ''));setFormRegister({...formRegister, phone: e.replace(/[^0-9]/g, '')})}}
             style={{
               color: 'black',
               backgroundColor: '#F8F8F8',

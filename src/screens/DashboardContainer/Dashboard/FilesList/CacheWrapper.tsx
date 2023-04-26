@@ -42,7 +42,7 @@ const icons = {
   ),  
 };
 const tempData = [
-  {name: "Cache file", icon: 'Cache'},
+  {name: "Cache \n", icon: 'Cache'},
   {name: "Thumbnails", icon: 'Thumbnails'},
   {name: "Not installed Apk", icon: 'NotInstalledApk'},
   {name: "Empty folders", icon: 'Empty'},

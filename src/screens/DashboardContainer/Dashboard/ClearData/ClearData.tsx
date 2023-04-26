@@ -1,6 +1,6 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 import React, {useCallback, useEffect, useState} from 'react';
-import {ScrollView, View, Text, StyleSheet, Button, BackHandler, Pressable} from 'react-native';
+import {ScrollView, View, Text, StyleSheet, Button, BackHandler, Pressable, RefreshControl} from 'react-native';
 import ManageApps from '../../../../utils/manageApps';
 import { FilesList, CacheWrapper, DuplicateWrapper, DateList } from '../FilesList';
 import {isAllOf, nanoid} from '@reduxjs/toolkit';
@@ -31,6 +31,7 @@ const addId = (arr: []) => {
 function ClearData({route, navigation}: {navigation: any; route: any}) {
   const {freeDiskStorage, notification} = route.params;
   const [showData, setShowData] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
   const [showModal, setShowModal] = useState<{show: boolean; loading: boolean}>(
     {show: true, loading: false},
   );
@@ -76,7 +77,7 @@ function ClearData({route, navigation}: {navigation: any; route: any}) {
 
   const showMessage = ({text, progress, sound=false}) => {
     console.log(text, progress)
-    if (!notification) {
+    if (!notification || !refreshing) {
       if (isFocused) {
         setProgressProps({text: text, progress: progress});
       } 
@@ -301,6 +302,19 @@ function ClearData({route, navigation}: {navigation: any; route: any}) {
     }
   }, [isFocused, rescanOnFocuse]);
 
+  const handleRefresh = useCallback(async () => {
+    setRefreshing(true);
+
+    const fetchTime = Date.now();
+    const files = await fetchFiles(RNFS.ExternalStorageDirectoryPath);
+    store.dispatch(setLastFetchTime(fetchTime));
+    store.dispatch(setFilesList(files));
+
+    await separateByCategory(files, false)    
+
+    setRefreshing(false);
+  }, [isFocused])
+
   return (
     <View style={styles.container}>
       <CleanModal 
@@ -314,7 +328,15 @@ function ClearData({route, navigation}: {navigation: any; route: any}) {
           navigation={navigation} 
         />
       </View>
-      <ScrollView style={styles.scrollView}>
+      <ScrollView 
+        style={styles.scrollView}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={handleRefresh}
+          />
+        }        
+      >
         <View style={styles.main}>
           {showData && (
             <>
