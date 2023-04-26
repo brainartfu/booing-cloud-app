@@ -170,6 +170,7 @@ export function DateList({
 }: DateListProps) {
   console.log(type, categoryView)
   const [showData, setShowData] = useState(null);
+  const [loadMoreLoading, setLoadMoreLoading] = useState(false);
   const [selectedFilesIds, setSelectedFilesIds] = useState<string[]>([]);
   const [deleteBtnProps, setDeleteBtnProps] = useState({
     disabled: false,
@@ -310,7 +311,32 @@ export function DateList({
     if (data.length > 0)
       setCategoryView(type)
   }
-
+  const getData = () => {
+    console.log('getData');
+    setLoadMoreLoading(true);
+    setTimeout(() => {
+      setLoadMoreLoading(false);
+    }, 3000);
+  }
+  const renderFooter = () => {
+    return (
+      //Footer View with Load More button
+      <View style={styles.footer}>
+        <TouchableOpacity
+          activeOpacity={0.9}
+          onPress={getData}
+          //On Click of button load more data
+          style={styles.loadMoreBtn}>
+          <Text style={styles.btnText}>Load More</Text>
+          {loadMoreLoading ? (
+            <ActivityIndicator
+              color="white"
+              style={{marginLeft: 8}} />
+          ) : null}
+        </TouchableOpacity>
+      </View>
+    );
+  };
   return (
     <>
       {data.length > 0 && (
@@ -406,6 +432,7 @@ export function DateList({
                    viewabilityConfig={{
                      minimumViewTime: 200,
                    }}
+                   // ListFooterComponent={renderFooter}
                  />
                )}
             </SafeAreaView>
@@ -440,4 +467,17 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     width: '100%',
   },
+  loadMoreBtn: {
+    padding: 10,
+    backgroundColor: '#800000',
+    borderRadius: 4,
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },  
+  btnText: {
+    color: 'white',
+    fontSize: 15,
+    textAlign: 'center',
+  },  
 });

@@ -1,5 +1,6 @@
 import React, {useEffect, useState, useCallback} from 'react';
 import {
+  PermissionsAndroid,
   Text,
   View,
   StyleSheet,
@@ -28,10 +29,10 @@ import Toast from 'react-native-toast-message';
 import ManageApps from '../../../../utils/manageApps';
 import ImagePlusIcon from '../../../../Components/ImagePlusIcon/ImagePlusIcon';
 import bytes from 'bytes';
+import {useSelector} from 'react-redux';
 
 
-
-const CreateFolder = ({closeModel}: {closeModel: (bool?: boolean) => void}) => {
+const CreateFolder = ({closeModel, fetchFolders}: {closeModel: (bool?: boolean) => void, fetchFolders: any}) => {
   const [name, setName] = useState('');
   const user_id = store.getState().authentication.userId;
   const [createFolderDisabled, setCreateFolderDisabled] = useState(false);
@@ -72,6 +73,7 @@ const CreateFolder = ({closeModel}: {closeModel: (bool?: boolean) => void}) => {
       if (response.status === 200) {
         closeModel(true);
         setCreateFolderDisabled(false);
+        fetchFolders();
         return Toast.show({
           text1: response.data.message,
         });
@@ -162,7 +164,7 @@ const CreateFolder = ({closeModel}: {closeModel: (bool?: boolean) => void}) => {
     </View>
   );
 };
-const Files = ({navigation}: {navigation: any}) => {
+const Files = ({navigation, fetchFolders}: {navigation: any, fetchFolders: any}) => {
   const [folders, setFolders] = useState([]);
   const [isCreatedFolderShown, setIsCreateFolderShown] = useState(false);
   const user_id = store.getState().authentication.userId;
@@ -201,7 +203,7 @@ const Files = ({navigation}: {navigation: any}) => {
         </Pressable>
         {isCreatedFolderShown && (
           <Dialog isVisible={true}>
-            <CreateFolder closeModel={hideCreateFolder} />
+            <CreateFolder closeModel={hideCreateFolder} fetchFolders={fetchFolders}/>
           </Dialog>
         )}
       </View>
@@ -250,23 +252,38 @@ const fileStyles = StyleSheet.create({
 });
 const Uploads = ({navigation}: {navigation: any}) => {
   const [folders, setFolders] = useState([]);
-  const category = store.getState().directories.category;
+  const category = useSelector(state => state.directories.category);
   const user_id = store.getState().authentication.userId;
   const isFocused = useIsFocused();
+  useSelector(state => state.directories.category);
   const handleUpload = async () => {
-    if (!(await ManageApps.checkAllFilesAccessPermission())) {
+    const granted = await PermissionsAndroid.requestMultiple([
+      PermissionsAndroid.PERMISSIONS.READ_EXTERNAL_STORAGE,
+      PermissionsAndroid.PERMISSIONS.WRITE_EXTERNAL_STORAGE
+    ], {
+      title: 'Permission Required',
+      message: 'This app needs access device storage to function properly.'
+    });
+
+    if (
+      granted[PermissionsAndroid.PERMISSIONS.READ_EXTERNAL_STORAGE] === PermissionsAndroid.RESULTS.GRANTED &&
+      granted[PermissionsAndroid.PERMISSIONS.WRITE_EXTERNAL_STORAGE] === PermissionsAndroid.RESULTS.GRANTED
+    ) {
+      console.log('All permissions granted');
+    } else {
       Toast.show({
         type: 'error',
-        text1: 'cannot upload, you need to enable all files access permission',
+        text1: 'You can not upload, you need to enable all files access permission',
       });
-    }
+      return false;
+    }    
     store.dispatch(setRootLoading(true));
     try {
       if (!user_id) {
         store.dispatch(setRootLoading(false));
         return Toast.show({
           type: 'error',
-          text1: 'cannot add files, you are not logged in !',
+          text1: 'You can not add files, you are not logged in !',
         });
       }
 
@@ -281,8 +298,8 @@ const Uploads = ({navigation}: {navigation: any}) => {
             store.dispatch(setRootLoading(false));
             return Toast.show({
               type: 'info',
-              text1: 'cannot upload file(s)',
-              text2: `file (${fileDesc.name}) has exceeded the max size (16mb)`,
+              text1: 'You can not upload file(s)',
+              text2: `File (${fileDesc.name}) has exceeded the max size (16mb)`,
             });
           }
 
@@ -327,7 +344,7 @@ const Uploads = ({navigation}: {navigation: any}) => {
 
       Toast.show({
         type: 'error',
-        text1: 'something went wrong cannot uplaod files',
+        text1: "Something went wrong and the file couldn't be uploaded.",
       });
     }
     store.dispatch(setRootLoading(false));
@@ -406,7 +423,7 @@ const Uploads = ({navigation}: {navigation: any}) => {
       </View>
       <ScrollView style={styles.scrollView}>
         <View style={{flexDirection: 'row', justifyContent: 'space-between', paddingRight: 30}}>
-          <Files navigation={navigation} />    
+          <Files navigation={navigation} fetchFolders={fetchFolders}/>    
           <Pressable style={[fileStyles.button, {paddingLeft: 15, justifyContent: 'flex-start', backgroundColor: '#6DBDFE', width: '30%', padding: 1, height: 43, marginTop: 10}]} onPress={handleUpload}>
             <AntDesign name="pluscircleo" size={15} color="white" style={{marginRight: 18}} />
             <Text style={[fileStyles.buttonText, {color: 'white'}]}>File</Text>

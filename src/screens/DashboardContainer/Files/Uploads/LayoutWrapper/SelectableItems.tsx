@@ -63,7 +63,6 @@ const SelectableItems = ({
     item: {name, id, progress, hasTriedToUpload, thumbnail, category},
     index,
   }: any) => {
-    console.log(category)
     return (
       <Item
         name={name}

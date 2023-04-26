@@ -48,6 +48,7 @@ export const getCategoryInfo = async (data: {user_id: string}) => {
         else if (res.data[i]['_id'] === 'video') category['video'] = {updated: res.data[i]['updated'], count: res.data[i]['count']}
         else if (res.data[i]['_id'] === 'audio') category['audio'] = {updated: res.data[i]['updated'], count: res.data[i]['count']}
         else {
+          console.log(res.data[i])
           if (category['other']['count']) {
             category['other'] = {
               updated: Math.max(category['other']['updated'], res.data[i]['updated']), 

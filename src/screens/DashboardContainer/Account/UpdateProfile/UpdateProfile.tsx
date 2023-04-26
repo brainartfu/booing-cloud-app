@@ -202,7 +202,7 @@ const UpdateProfile = ({ navigation }: any) => {
           modal
           open={onDatePicker}
           date={formUpdateUser.birth?new Date(formUpdateUser.birth):new Date()}
-          maximumDate={new Date()}
+          maximumDate={new Date(new Date().setFullYear(new Date().getFullYear() - 1))}
           onConfirm={(date) => {
             console.log(date)
             setOnDatePicker(false)

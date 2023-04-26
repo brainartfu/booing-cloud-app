@@ -11,7 +11,9 @@ const ProgressBar = ({progress, text}: any) => {
       justifyContent: 'center',
       alignItems: 'center'
     }}>
+    
       <Progress.Circle size={WIDTH/5} borderWidth={5} indeterminate={true} />
+
       <Text
         style={{
           textAlign: 'center',
